@@ -79,8 +79,10 @@ const BASIC = [
 // DEVELOPER: Tools only useful for web developers / firefox developers.
 const DEVELOPER = [...BASIC, 'debugging', 'network', 'console', 'profiler'];
 // MOZILLA: (all tools) Also includes privileged tools only useful for firefox
-// developers, and binary-level patches that ship with this fork only.
-const MOZILLA = [...DEVELOPER, 'launch', 'prefs', 'privileged', 'bidi', 'stealth'];
+// developers. The stealth module is left out on purpose: it edits the installed
+// browser, which needs elevation the server does not have, so it runs as its own
+// command line tool (see src/stealth-cli.ts) and only `all` includes it.
+const MOZILLA = [...DEVELOPER, 'launch', 'prefs', 'privileged', 'bidi'];
 
 export const PRESETS: Record<string, string[]> = {
   slim: SLIM,

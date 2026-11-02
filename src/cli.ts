@@ -195,6 +195,7 @@ export const cliOptions = {
     type: 'string',
     description:
       `Preset selecting which tool modules to enable: ${PRESET_NAMES.join(' < ')}. ` +
+      'Accepts a path to a JSON file holding module names for a custom set. ' +
       'Ignored when --tools is given. Privileged modules (mozilla/all) require MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1.',
     default: process.env.TOOL_PRESET || 'basic',
   },

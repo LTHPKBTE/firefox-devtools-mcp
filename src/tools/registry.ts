@@ -7,6 +7,7 @@
  * definition list + name->handler map + server instructions for them.
  */
 
+import { existsSync, readFileSync } from 'node:fs';
 import { MODULES, MODULE_NAMES, PRESETS, DEFAULT_PRESET } from './index.js';
 import { buildInstructions } from './instructions.js';
 import type { ToolDefinition, ToolHandler } from './module.js';
@@ -32,6 +33,39 @@ export interface Toolset {
 const mozBuildModuleNames = new Set(
   MODULES.filter((m) => m.privileged || m.mozOnly).map((m) => m.name)
 );
+
+/**
+ * Reads a preset from a JSON file: either an array of module names, or an
+ * object with a `modules` array.
+ *
+ * A file lets a caller keep a module list under version control instead of
+ * repeating `--tools` on every launch, without this catalog having to know
+ * about that list. Returns null when the name is not an existing file, which is
+ * the usual case because presets are normally one of the built-in names.
+ */
+function readPresetFile(name: string, warnings: string[]): string[] | null {
+  if (!existsSync(name)) {
+    return null;
+  }
+  try {
+    const parsed: unknown = JSON.parse(readFileSync(name, 'utf-8'));
+    const list = Array.isArray(parsed)
+      ? parsed
+      : typeof parsed === 'object' && parsed !== null && 'modules' in parsed
+        ? (parsed as { modules: unknown }).modules
+        : null;
+    if (!Array.isArray(list) || list.some((entry) => typeof entry !== 'string')) {
+      warnings.push(`Preset file "${name}" must hold an array of module names.`);
+      return null;
+    }
+    return list as string[];
+  } catch (error) {
+    warnings.push(
+      `Cannot read preset file "${name}": ${error instanceof Error ? error.message : String(error)}`
+    );
+    return null;
+  }
+}
 
 /**
  * Resolve the enabled modules from CLI configuration and build their tools.
@@ -80,7 +114,7 @@ function selectModules(options: ToolsetOptions): { moduleNames: string[]; warnin
     }
   } else {
     const presetName = preset ?? DEFAULT_PRESET;
-    let presetModules = PRESETS[presetName];
+    let presetModules = PRESETS[presetName] ?? readPresetFile(presetName, warnings) ?? undefined;
     if (!presetModules) {
       warnings.push(`Unknown tool preset: "${presetName}". Falling back to "${DEFAULT_PRESET}".`);
       presetModules = PRESETS[DEFAULT_PRESET] ?? [];

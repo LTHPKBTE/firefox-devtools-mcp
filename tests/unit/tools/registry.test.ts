@@ -3,10 +3,13 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { readdirSync } from 'node:fs';
+import { mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MODULES, PRESETS, DEFAULT_PRESET } from '../../../src/tools/index.js';
 import { buildToolset } from '../../../src/tools/registry.js';
+import { removeDir } from '../../helpers/fs.js';
 import type { ToolModule } from '../../../src/tools/module.js';
 
 // Tool files whose exports are not modules; everything else in src/tools is
@@ -83,6 +86,11 @@ describe('Tool registry', () => {
       expect([...PRESETS.all].sort()).toEqual(MODULES.map((m) => m.name).sort());
     });
 
+    it('leaves stealth out of the mozilla preset but not out of all', () => {
+      expect(PRESETS.mozilla).not.toContain('stealth');
+      expect(PRESETS.all).toContain('stealth');
+    });
+
     it('basic (default) excludes debugging, prefs, and privileged', () => {
       expect(PRESETS[DEFAULT_PRESET]).not.toContain('debugging');
       expect(PRESETS[DEFAULT_PRESET]).not.toContain('prefs');
@@ -125,6 +133,32 @@ describe('Tool registry', () => {
       const { moduleNames, warnings } = buildToolset({ preset: 'nope' });
       expect(moduleNames).toContain('pages');
       expect(warnings.some((w) => w.includes('nope'))).toBe(true);
+    });
+
+    it('reads a custom preset from a JSON file', () => {
+      const dir = mkdtempSync(join(tmpdir(), 'preset-file-'));
+      const file = join(dir, 'tools.json');
+      writeFileSync(file, JSON.stringify({ modules: ['network', 'pages'] }));
+      try {
+        const { moduleNames, warnings } = buildToolset({ preset: file });
+        // Canonical order, same as --tools.
+        expect(moduleNames).toEqual(['pages', 'network']);
+        expect(warnings).toEqual([]);
+      } finally {
+        removeDir(dir);
+      }
+    });
+
+    it('warns about a preset file that is not a module list', () => {
+      const dir = mkdtempSync(join(tmpdir(), 'preset-file-bad-'));
+      const file = join(dir, 'tools.json');
+      writeFileSync(file, JSON.stringify({ modules: [1, 2] }));
+      try {
+        const { warnings } = buildToolset({ preset: file });
+        expect(warnings.some((w) => w.includes('array of module names'))).toBe(true);
+      } finally {
+        removeDir(dir);
+      }
     });
 
     it('treats --enable-script as a deprecated alias for the developer preset', () => {

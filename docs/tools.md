@@ -32,7 +32,7 @@ the Mozilla-internal build; the public package drops both.
 | `prefs` (privileged)      | 2     | -    | -     | -         | yes     | yes |
 | `privileged` (privileged) | 3     | -    | -     | -         | yes     | yes |
 | `bidi` (moz build)        | 1     | -    | -     | -         | yes     | yes |
-| `stealth` (moz build)     | 3     | -    | -     | -         | yes     | yes |
+| `stealth` (moz build)     | 3     | -    | -     | -         | -       | yes |
 
 ## Tools that accept `saveTo`
 
