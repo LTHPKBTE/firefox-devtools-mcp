@@ -37,6 +37,11 @@ Options:
   --firefox-path <path>  Browser executable to work on (default: detected install)
   --dry-run              With prune: list what would be deleted, delete nothing
   --json                 Print the result as JSON
+
+Undoing the patch:
+  Run restore, then prune. One backup is kept on purpose: the one belonging to
+  the file now installed, because restore needs it. Delete the stealth
+  directory under ~/.firefox-devtools-mcp to remove it as well.
 `;
 
 interface Options {
