@@ -72,6 +72,9 @@ export function parseArgs(argv: string[]): Options {
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
+    if (arg === undefined) {
+      continue;
+    }
     if (arg === '--help' || arg === '-h') {
       options.help = true;
     } else if (arg === '--firefox-path') {
