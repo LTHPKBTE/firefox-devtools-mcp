@@ -181,16 +181,24 @@ npx @mozilla/firefox-devtools-mcp --tool-preset developer
 
 # Enable only the modules you need
 npx @mozilla/firefox-devtools-mcp --tools pages network console
+
+# Or keep that list in a file: ["pages", "network", "console"]
+npx @mozilla/firefox-devtools-mcp --tool-preset ./my-tools.json
 ```
+
+`--tool-preset` takes a built-in name or the path to a JSON file holding either an array of
+module names or `{ "modules": [...] }`, so a custom set can live in the repository or in the
+MCP client configuration instead of the command line.
 
 The `prefs` and `privileged` modules require `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1`. The `launch`
 module restarts Firefox under a caller-chosen binary, profile, environment and set of
 preferences, which is a configuration change the operator should own. The `bidi` module sends
 any WebDriver BiDi command, so it gives access to what the other modules expose. The `stealth`
-module edits the installed browser binary; see [Hiding the WebDriver
-flag](#hiding-the-webdriver-flag-stealth-module). This fork builds all five modules in; the
-upstream public package skips them even if requested and logs a warning naming the modules it
-dropped.
+module edits the installed browser binary, so it needs elevation the server usually lacks: it is
+not part of `mozilla` and is meant to be run from a separate command, included in `all`; see
+[Hiding the WebDriver flag](#hiding-the-webdriver-flag-stealth-module). This fork builds all
+five modules in; the upstream public package skips them even if requested and logs a warning
+naming the modules it dropped.
 
 ### Hiding the WebDriver flag (`stealth` module)
 
@@ -202,19 +210,35 @@ with `xor eax, eax; ret`, which makes the property read false while an automatio
 active. This was verified against the browser: with the patch `navigator.webdriver` is `false`
 and the session still works, and restoring the file brings `true` back.
 
-- `get_stealth_status` reports the module path, version, SHA-256, patch offset and backups.
-- `patch_navigator_webdriver` backs the original file up under
-  `~/.firefox-devtools-mcp/stealth/backups/<sha256>/`, then patches it in place.
-- `restore_navigator_webdriver` copies that backup back.
+Because the write lands in the install directory, the work is done by a separate command that
+you run from a shell started as administrator — the server itself stays unprivileged:
+
+```bash
+# After `npm run build:moz` (the release tarball ships this file as dist/stealth-cli.js)
+node dist.moz/stealth-cli.js status
+node dist.moz/stealth-cli.js patch --firefox-path "C:\Program Files\Waterfox\waterfox.exe"
+node dist.moz/stealth-cli.js restore --firefox-path "C:\Program Files\Waterfox\waterfox.exe"
+node dist.moz/stealth-cli.js prune --dry-run   # then drop --dry-run
+```
+
+`--firefox-path` defaults to a detected install on Windows. `status`, `patch` and `restore`
+also exist as MCP tools of the same names (`get_stealth_status`, `patch_navigator_webdriver`,
+`restore_navigator_webdriver`) and are exposed when the `all` preset is selected.
+
+The original file is backed up under `~/.firefox-devtools-mcp/stealth/backups/<sha256>/`
+before it is written. Each browser update leaves an older backup behind, so `prune` deletes
+every backup except the one belonging to the file now installed, and reports what it removes;
+`--dry-run` lists them first. It refuses to prune when no backup belongs to the given path, so
+a mistyped path cannot wipe the directory.
 
 The browser must be closed: the library is loaded and Windows refuses the write otherwise, which
-the tools report as a busy file. Installs under `Program Files` also need the server to run
-elevated, which they report as a permission error instead. The function is located by a byte
-signature rather than a fixed address, so the same patch applies across rebuilds; when a build
-does not match a known signature the tools report `unrecognized` and change nothing. A browser
-update replaces the patched file with the vendor one, so it also reports `unrecognized` until a
-signature for the new build is added, and the old backup is kept but never restored over the new
-install. Signatures currently cover the Windows x64 153 build; the patch is implemented for
+the command reports as a busy file. Installs under `Program Files` need the elevated shell, which
+they report as a permission error instead. The function is located by a byte signature rather
+than a fixed address, so the same patch applies across rebuilds; when a build does not match a
+known signature the command reports `unrecognized` and changes nothing. A browser update
+replaces the patched file with the vendor one, so it also reports `unrecognized` until a
+signature for the new build is added, and the old backup is kept but never restored over the
+new install. Signatures currently cover the Windows x64 153 build; the patch is implemented for
 Windows and Linux, not macOS.
 
 ### Useful preferences (`--pref`)
