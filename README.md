@@ -321,14 +321,17 @@ you run from a shell started as administrator — the server itself stays unpriv
 ```bash
 # After `npm run build:moz` (the release tarball ships this file as dist/stealth-cli.js)
 node dist.moz/stealth-cli.js status
-node dist.moz/stealth-cli.js patch --firefox-path "C:\Program Files\Waterfox\waterfox.exe"
-node dist.moz/stealth-cli.js restore --firefox-path "C:\Program Files\Waterfox\waterfox.exe"
+node dist.moz/stealth-cli.js patch --firefox-path "C:\Program Files\Waterfox"
+node dist.moz/stealth-cli.js restore --firefox-path "C:\Program Files\Waterfox"
 node dist.moz/stealth-cli.js prune --dry-run   # then drop --dry-run
 ```
 
-`--firefox-path` defaults to a detected **Firefox** install on Windows: `Program Files`, the
-`firefox.exe` App Paths registry entries, or `PATH`. Other builds — Waterfox, LibreWolf, a
-portable copy — are only found when you pass the path, which is why the examples above do.
+`--firefox-path` takes either the executable or the install directory holding it, and may come
+before or after the command. Leave off a trailing backslash inside quotes, which PowerShell's
+argument parsing swallows. Without the option the command looks for a detected **Firefox**
+install on Windows: `Program Files`, the `firefox.exe` App Paths registry entries, or `PATH`.
+Other builds — Waterfox, LibreWolf, a portable copy — are only found when you pass the path,
+which is why the examples above do.
 `status`, `patch` and `restore`
 also exist as MCP tools of the same names (`get_stealth_status`, `patch_navigator_webdriver`,
 `restore_navigator_webdriver`) and are exposed when the `all` preset is selected.

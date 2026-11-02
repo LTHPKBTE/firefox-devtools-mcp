@@ -262,14 +262,15 @@ node dist/index.js --tool-preset ./my-tools.json
 ```bash
 # 先执行 `npm run build:moz`（Release tar 包中该文件是 dist/stealth-cli.js）
 node dist.moz/stealth-cli.js status
-node dist.moz/stealth-cli.js patch --firefox-path "C:\Program Files\Waterfox\waterfox.exe"
-node dist.moz/stealth-cli.js restore --firefox-path "C:\Program Files\Waterfox\waterfox.exe"
+node dist.moz/stealth-cli.js patch --firefox-path "C:\Program Files\Waterfox"
+node dist.moz/stealth-cli.js restore --firefox-path "C:\Program Files\Waterfox"
 node dist.moz/stealth-cli.js prune --dry-run   # 确认后再去掉 --dry-run
 ```
 
-`--firefox-path` 在 Windows 上默认指向自动探测到的 **Firefox** 安装：`Program Files`、注册表
-`firefox.exe` 的 App Paths 项，或 `PATH`。其他构建——Waterfox、LibreWolf、便携版——只有显式
-传路径才能找到，上面示例正是因此写了完整路径。`status`、`patch`、`restore` 也有同名的 MCP 工具（`get_stealth_status`、`patch_navigator_webdriver`、`restore_navigator_webdriver`），选择 `all` 预设时会暴露。
+`--firefox-path` 既可以给可执行文件，也可以给装着它的安装目录，写在命令前后都行。引号内不要
+以反斜杠结尾，PowerShell 会把它当成转义。不给这个选项时，Windows 上只会去找自动探测到的
+**Firefox** 安装：`Program Files`、`firefox.exe` 的 App Paths 注册表项，或 `PATH`。其他构建——
+Waterfox、LibreWolf、便携版——只有显式传路径才能找到，上面示例正是因此写了路径。`status`、`patch`、`restore` 也有同名的 MCP 工具（`get_stealth_status`、`patch_navigator_webdriver`、`restore_navigator_webdriver`），选择 `all` 预设时会暴露。
 
 写入之前，原文件会备份到 `~/.firefox-devtools-mcp/stealth/backups/<sha256>/`。每次浏览器升级都会留下更早的备份，因此 `prune` 会删除除"当前安装对应的那一份"之外的所有备份，并报告删掉了什么；`--dry-run` 先只列出。若没有任何备份属于给定路径，它会拒绝执行，所以路径写错也不会清空整个目录。
 

@@ -12,7 +12,9 @@
  * ends share the same implementation.
  */
 
-import { existsSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { findFirefoxBinaryWindows } from './firefox/windows-binary.js';
 import {
   backupPathFor,
@@ -34,9 +36,16 @@ Commands:
   prune     Delete backups other than the one for the current install
 
 Options:
-  --firefox-path <path>  Browser executable to work on (default: detected Firefox install)
+  --firefox-path <path>  Browser executable, or the install directory holding it
+                         (default: detected Firefox install)
   --dry-run              With prune: list what would be deleted, delete nothing
   --json                 Print the result as JSON
+
+Options may come before or after the command. Paths with spaces need quotes.
+
+Examples:
+  stealth status
+  stealth patch --firefox-path "C:\\Program Files\\Waterfox\\waterfox.exe"
 
 Undoing the patch:
   Run restore, then prune. One backup is kept on purpose: the one belonging to
@@ -45,24 +54,34 @@ Undoing the patch:
 `;
 
 interface Options {
-  command: string;
+  command: string | undefined;
   firefoxPath: string | undefined;
   dryRun: boolean;
   json: boolean;
+  help: boolean;
 }
 
-function parseArgs(argv: string[]): Options {
+export function parseArgs(argv: string[]): Options {
   const options: Options = {
-    command: argv[0] ?? 'help',
+    command: undefined,
     firefoxPath: undefined,
     dryRun: false,
     json: false,
+    help: false,
   };
 
-  for (let i = 1; i < argv.length; i++) {
+  for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === '--firefox-path') {
+    if (arg === '--help' || arg === '-h') {
+      options.help = true;
+    } else if (arg === '--firefox-path') {
       const value = argv[++i];
+      if (!value) {
+        throw new Error('--firefox-path needs a path');
+      }
+      options.firefoxPath = value;
+    } else if (arg.startsWith('--firefox-path=')) {
+      const value = arg.slice('--firefox-path='.length);
       if (!value) {
         throw new Error('--firefox-path needs a path');
       }
@@ -71,20 +90,48 @@ function parseArgs(argv: string[]): Options {
       options.dryRun = true;
     } else if (arg === '--json') {
       options.json = true;
+    } else if (arg.startsWith('-')) {
+      throw new Error(`Unknown option: ${arg}`);
+    } else if (options.command === undefined) {
+      options.command = arg;
     } else {
-      throw new Error(`Unknown argument: ${arg}`);
+      throw new Error(
+        `Unexpected argument: ${arg} (the command is already ${options.command}; quote paths that contain spaces)`
+      );
     }
   }
   return options;
+}
+
+/** Executable names to look for when an install directory is passed instead of a file. */
+const WINDOWS_EXECUTABLES = ['firefox.exe', 'waterfox.exe'];
+
+function isDirectory(path: string): boolean {
+  try {
+    return statSync(path).isDirectory();
+  } catch {
+    return false;
+  }
 }
 
 /**
  * The install to work on. Nothing is inferred beyond the browser this platform
  * can find, because patching the wrong install fails confusingly at best.
  */
-function resolveBinaryPath(explicit: string | undefined): string {
+export function resolveBinaryPath(explicit: string | undefined): string {
   if (explicit) {
-    return explicit;
+    if (!isDirectory(explicit)) {
+      return explicit;
+    }
+    const found = WINDOWS_EXECUTABLES.map((name) => join(explicit, name)).find((candidate) =>
+      existsSync(candidate)
+    );
+    if (!found) {
+      throw new Error(
+        `No browser executable in ${explicit} (looked for ${WINDOWS_EXECUTABLES.join(', ')})`
+      );
+    }
+    return found;
   }
   if (process.platform === 'win32') {
     const detected = findFirefoxBinaryWindows();
@@ -116,18 +163,28 @@ function describeStatus(status: ModuleStatus): string[] {
 
 function main(argv: string[]): number {
   const options = parseArgs(argv);
-  if (options.command === 'help' || options.command === '--help' || options.command === '-h') {
+  const command = options.command;
+  if (options.help) {
     process.stdout.write(USAGE);
     return 0;
+  }
+  if (command === undefined) {
+    process.stderr.write(`stealth: no command given\n\n${USAGE}`);
+    return 1;
   }
 
   const binaryPath = resolveBinaryPath(options.firefoxPath);
   const modulePath = resolveModulePath(binaryPath);
-  if (options.command !== 'prune' && !existsSync(modulePath)) {
+  if (command !== 'prune' && !existsSync(modulePath)) {
     throw new Error(`No browser module at ${modulePath} (binary: ${binaryPath})`);
   }
 
-  if (options.command === 'status') {
+  if (command === 'help') {
+    process.stdout.write(USAGE);
+    return 0;
+  }
+
+  if (command === 'status') {
     const status = getModuleStatus(modulePath);
     if (options.json) {
       process.stdout.write(`${JSON.stringify(status, null, 2)}\n`);
@@ -141,7 +198,7 @@ function main(argv: string[]): number {
     return 0;
   }
 
-  if (options.command === 'patch') {
+  if (command === 'patch') {
     const outcome = patchWebdriverFlag(modulePath);
     if (options.json) {
       process.stdout.write(
@@ -156,7 +213,7 @@ function main(argv: string[]): number {
     return 0;
   }
 
-  if (options.command === 'restore') {
+  if (command === 'restore') {
     const outcome = restoreModule(modulePath);
     if (options.json) {
       process.stdout.write(
@@ -171,7 +228,7 @@ function main(argv: string[]): number {
     return 0;
   }
 
-  if (options.command === 'prune') {
+  if (command === 'prune') {
     const outcome = pruneBackups(modulePath, { dryRun: options.dryRun });
     if (options.json) {
       process.stdout.write(`${JSON.stringify(outcome, null, 2)}\n`);
@@ -192,12 +249,23 @@ function main(argv: string[]): number {
     return 0;
   }
 
-  throw new Error(`Unknown command: ${options.command}\n\n${USAGE}`);
+  throw new Error(`Unknown command: ${command}\n\n${USAGE}`);
 }
 
-try {
-  process.exitCode = main(process.argv.slice(2));
-} catch (error) {
-  process.stderr.write(`stealth: ${error instanceof Error ? error.message : String(error)}\n`);
-  process.exitCode = 1;
+/**
+ * Only run when started as a program: the parser is unit-tested by importing
+ * this module, which must not execute a command on the way in.
+ */
+function startedAsProgram(): boolean {
+  const entry = process.argv[1];
+  return entry !== undefined && import.meta.url === pathToFileURL(entry).href;
+}
+
+if (startedAsProgram()) {
+  try {
+    process.exitCode = main(process.argv.slice(2));
+  } catch (error) {
+    process.stderr.write(`stealth: ${error instanceof Error ? error.message : String(error)}\n`);
+    process.exitCode = 1;
+  }
 }

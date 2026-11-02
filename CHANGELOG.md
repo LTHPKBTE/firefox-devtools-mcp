@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation splits issue reporting by build: a Release tarball, the `.mcpb` bundle, a CI artifact or a local build is reported in this repository, while the upstream tracker takes only reports reproduced with the upstream package
 - The README's tool list heading is `## Tools` instead of `## Tool overview`
 
+### Fixed
+- `stealth` accepts its options before or after the command, and a missing command prints the usage instead of `Unknown argument` naming the path
+- `stealth --firefox-path` also takes the install directory, looking for `firefox.exe` or `waterfox.exe` inside it
+
 ## [0.10.7] - 2026-10-28
 
 ### Added
