@@ -24,6 +24,16 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
+      # The tag names the release, package.json names the artifacts inside it,
+      # so a mismatch would ship a bundle whose version differs from its URL.
+      - name: Verify tag matches package.json
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $version" >&2
+            exit 1
+          fi
+
       - name: Build all-tools bundle
         run: npm run build:moz
 
