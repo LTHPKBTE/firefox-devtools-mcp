@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - `stealth` accepts its options before or after the command, and a missing command prints the usage instead of `Unknown argument` naming the path
 - `stealth --firefox-path` also takes the install directory, looking for `firefox.exe` or `waterfox.exe` inside it
+- CI and Release build both entry points: the integration tests load `dist/snapshot.injected.global.js`, which `npm run build:moz` does not write, so every test failed with `Failed to load bundled snapshot script`
 
 ## [0.10.7] - 2026-10-28
 

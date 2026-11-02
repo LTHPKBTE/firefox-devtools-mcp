@@ -4,7 +4,9 @@ This project ships with ready-to-use GitHub Actions for CI and release.
 
 All workflows build the all-tools entry point (`src/index.moz.ts`) through `npm run build:moz`,
 so the artifacts include the Mozilla-only modules (`prefs`, `privileged`, `launch`, `bidi`).
-The upstream public build (`npm run build`, `dist/`) is not used here.
+They also run the public build (`npm run build`, `dist/`) through `npm run build:all`, because the
+integration tests load the browser-side `dist/snapshot.injected.global.js` from there;
+`build:moz` writes `dist.moz/` only.
 
 Workflows
 - CI (.github/workflows/ci.yml)
@@ -12,7 +14,7 @@ Workflows
   - On pull requests, only runs when the `run-integration` label is applied. It is the
     only workflow that runs the integration suite, so it is opt-in per PR.
   - Matrix: Node 20 and 22.
-  - Steps: install → lint → format check → typecheck → test → build all-tools bundle.
+  - Steps: install → lint → format check → typecheck → build (both entries) → test.
   - Optional: uploads coverage to Codecov if `coverage/lcov.info` exists and `CODECOV_TOKEN` is set.
   - Uploads the `dist.moz/` artifact (Node 20 job) for quick download.
 
@@ -22,8 +24,8 @@ Workflows
 - Release (.github/workflows/release.yml)
   - On tag push `v*` **only**. Pushes to branches never create a Release.
   - Fails unless the tag equals `v` + the `package.json` version.
-  - Runs tests, builds `dist.moz/`, renames it to `dist/`, and creates a GitHub Release with
-    a tarball of `dist` + metadata and the MCPB bundle.
+  - Runs tests, builds both entries, renames `dist.moz/` to `dist/`, and creates a GitHub Release
+    with a tarball of `dist` + metadata and the MCPB bundle.
 
 What each workflow produces
 

@@ -34,14 +34,16 @@ jobs:
             exit 1
           fi
 
-      - name: Build all-tools bundle
-        run: npm run build:moz
+      # The integration tests load dist/snapshot.injected.global.js, which only
+      # the public build writes; build:moz writes dist.moz/.
+      - name: Build
+        run: npm run build:all
 
       - name: Test
         run: npm run test:run
 
       - name: Normalize output directory
-        run: mv dist.moz dist
+        run: rm -rf dist && mv dist.moz dist
 
       - name: Create archive
         run: tar -czf firefox-devtools-mcp-${{ github.ref_name }}.tar.gz dist package.json README.md README.zh-CN.md LICENSE-APACHE LICENSE-MIT

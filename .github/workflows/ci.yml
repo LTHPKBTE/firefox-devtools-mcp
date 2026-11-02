@@ -51,8 +51,11 @@ jobs:
       - name: Type check tests
         run: npm run typecheck:tests
 
-      - name: Build all-tools bundle
-        run: npm run build:moz
+      # The integration tests load dist/snapshot.injected.global.js, which only
+      # the public build writes; build:moz writes dist.moz/. Run both, and upload
+      # the all-tools bundle below.
+      - name: Build
+        run: npm run build:all
 
       - name: Install Firefox
         id: setup-firefox
