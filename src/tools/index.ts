@@ -31,6 +31,7 @@ import { module as debugging } from './debugging.js';
 import { module as prefs } from './firefox-prefs.js';
 import { module as privileged } from './privileged-context.js';
 import { module as bidi } from './bidi.js';
+import { module as stealth } from './stealth.js';
 import type { ToolModule } from './module.js';
 
 export type { ToolDefinition, ToolEntry, ToolModule } from './module.js';
@@ -55,6 +56,7 @@ export const MODULES: ToolModule[] = [
   prefs,
   privileged,
   bidi,
+  stealth,
 ];
 
 export const MODULE_NAMES = MODULES.map((m) => m.name);
@@ -77,8 +79,8 @@ const BASIC = [
 // DEVELOPER: Tools only useful for web developers / firefox developers.
 const DEVELOPER = [...BASIC, 'debugging', 'network', 'console', 'profiler'];
 // MOZILLA: (all tools) Also includes privileged tools only useful for firefox
-// developers.
-const MOZILLA = [...DEVELOPER, 'launch', 'prefs', 'privileged', 'bidi'];
+// developers, and binary-level patches that ship with this fork only.
+const MOZILLA = [...DEVELOPER, 'launch', 'prefs', 'privileged', 'bidi', 'stealth'];
 
 export const PRESETS: Record<string, string[]> = {
   slim: SLIM,

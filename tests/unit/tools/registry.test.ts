@@ -63,11 +63,11 @@ describe('Tool registry', () => {
       expect(privileged).toEqual(['prefs', 'privileged']);
     });
 
-    it('marks bidi and launch as moz-only modules', () => {
+    it('marks bidi, launch and stealth as moz-only modules', () => {
       const mozOnly = MODULES.filter((m) => m.mozOnly)
         .map((m) => m.name)
         .sort();
-      expect(mozOnly).toEqual(['bidi', 'launch']);
+      expect(mozOnly).toEqual(['bidi', 'launch', 'stealth']);
     });
   });
 

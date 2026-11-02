@@ -32,6 +32,7 @@ the Mozilla-internal build; the public package drops both.
 | `prefs` (privileged)      | 2     | -    | -     | -         | yes     | yes |
 | `privileged` (privileged) | 3     | -    | -     | -         | yes     | yes |
 | `bidi` (moz build)        | 1     | -    | -     | -         | yes     | yes |
+| `stealth` (moz build)     | 3     | -    | -     | -         | yes     | yes |
 
 ## Tools that accept `saveTo`
 
@@ -75,6 +76,7 @@ accepted paths.
 - [prefs](#prefs): Get and set Firefox preferences.
 - [privileged](#privileged): Access privileged ("chrome") browsing contexts.
 - [bidi](#bidi): Send raw WebDriver BiDi commands.
+- [stealth](#stealth): Remove automation fingerprints by patching the browser binary (navigator.webdriver).
 
 ## pages
 
@@ -721,3 +723,35 @@ Parameters:
 - `params` (object, optional) - Command parameters (default: {})
 - `saveTo` (boolean | string, optional) - Save the result to a file as JSON instead of returning it inline. Pass a file path, an existing directory (generated file inside), or true (generated file under ~/.firefox-devtools-mcp/output/). Relative paths resolve against the current working directory.
 - `preview` (number, optional) - Number of characters of the saved result to return inline as a preview when saveTo is used. Omit for no preview.
+
+## stealth
+
+Remove automation fingerprints by patching the browser binary (navigator.webdriver).
+
+Requires the Mozilla-internal build.
+
+### `get_stealth_status`
+
+_Read-only._
+
+Report whether the browser binary is patched to hide the WebDriver flag: module path, version, file hash, patch offset and available backups. Use it before and after patch_navigator_webdriver.
+
+Parameters:
+
+- `firefoxPath` (string, optional) - Path to the browser executable. Defaults to the running session, the --firefox-path argument, or a detected install.
+
+### `patch_navigator_webdriver`
+
+Patch the installed browser binary so navigator.webdriver always reads false, and back the original file up first. The browser must be closed; the change applies from the next start. Reading the flag as false is what an anti-automation check looks at.
+
+Parameters:
+
+- `firefoxPath` (string, optional) - Path to the browser executable. Defaults to the running session, the --firefox-path argument, or a detected install.
+
+### `restore_navigator_webdriver`
+
+Undo patch_navigator_webdriver by copying the backup of the original browser library back, which brings navigator.webdriver back. The browser must be closed. After a browser update the installed file is already the vendor one; nothing is restored then.
+
+Parameters:
+
+- `firefoxPath` (string, optional) - Path to the browser executable. Defaults to the running session, the --firefox-path argument, or a detected install.
