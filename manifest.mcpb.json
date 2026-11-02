@@ -24,9 +24,7 @@
         "--connect-existing",
         "--lookup-marionette-port",
         "--tool-preset",
-        "developer",
-        "--pref",
-        "remote.prefs.recommended=false"
+        "developer"
       ]
     }
   },
