@@ -30,6 +30,7 @@ import {
   moduleFileName,
   parseIni,
   patchWebdriverFlag,
+  pruneBackups,
   readBuildInfo,
   resolveModulePath,
   restoreModule,
@@ -223,5 +224,76 @@ describe('patching an installed module', () => {
   it('records the build markers of the install it patched', () => {
     patchWebdriverFlag(modulePath);
     expect(readBuildInfo(installDir)).toEqual({ version: '153.6.0', buildId: '20261027085606' });
+  });
+});
+
+describe('pruning backups', () => {
+  const installDir = join(tmpdir(), `stealth-prune-install-${process.pid}`);
+  const modulePath = join(installDir, moduleFileName());
+
+  beforeEach(() => {
+    removeDir(MOCK_HOME);
+    removeDir(installDir);
+    mkdirSync(installDir, { recursive: true });
+    writeFileSync(modulePath, fakeModule());
+  });
+
+  afterEach(() => {
+    removeDir(MOCK_HOME);
+    removeDir(installDir);
+  });
+
+  it('keeps the backup of the installed file and deletes the rest', () => {
+    // Patch, then let an "update" replace the file and patch that too: the
+    // first backup can no longer restore anything.
+    patchWebdriverFlag(modulePath);
+    const updated = fakeModule(0x200, 0x400);
+    writeFileSync(modulePath, updated);
+    patchWebdriverFlag(modulePath);
+    expect(listRecords()).toHaveLength(2);
+
+    const outcome = pruneBackups(modulePath);
+    expect(outcome.kept).toHaveLength(1);
+    expect(outcome.removed).toHaveLength(1);
+    expect(listRecords()).toHaveLength(1);
+    const removed = outcome.removed[0];
+    expect(removed && existsSync(backupPathFor(removed))).toBe(false);
+
+    // What is kept still restores the installed file.
+    expect(restoreModule(modulePath).changed).toBe(true);
+    expect(readFileSync(modulePath).equals(updated)).toBe(true);
+  });
+
+  it('leaves everything in place with dryRun', () => {
+    patchWebdriverFlag(modulePath);
+    const updated = fakeModule(0x200, 0x400);
+    writeFileSync(modulePath, updated);
+    patchWebdriverFlag(modulePath);
+
+    const outcome = pruneBackups(modulePath, { dryRun: true });
+    expect(outcome.dryRun).toBe(true);
+    expect(outcome.removed).toHaveLength(1);
+    expect(listRecords()).toHaveLength(2);
+  });
+
+  it('deletes backup directories that hold no record', () => {
+    patchWebdriverFlag(modulePath);
+    const [record] = listRecords();
+    if (!record) {
+      throw new Error('expected the patch to leave a record');
+    }
+    const leftover = join(dirname(dirname(backupPathFor(record))), 'deadbeef');
+    mkdirSync(leftover, { recursive: true });
+
+    const outcome = pruneBackups(modulePath);
+    expect(outcome.removedLeftovers).toEqual([leftover]);
+    expect(existsSync(leftover)).toBe(false);
+  });
+
+  it('refuses a path no backup belongs to', () => {
+    patchWebdriverFlag(modulePath);
+    const strayModule = join(tmpdir(), `stealth-stray-${process.pid}`, moduleFileName());
+    expect(() => pruneBackups(strayModule)).toThrow(/No patch backup was recorded/);
+    expect(listRecords()).toHaveLength(1);
   });
 });

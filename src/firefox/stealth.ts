@@ -26,10 +26,11 @@ import {
   openSync,
   readFileSync,
   readdirSync,
+  rmSync,
   writeFileSync,
   writeSync,
 } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { homeRoot } from '../utils/paths.js';
 import { logDebug } from '../utils/logger.js';
 
@@ -609,4 +610,85 @@ export function restoreModule(modulePath: string): PatchOutcome {
   }
   logDebug(`Restored ${modulePath} from ${backup}`);
   return { modulePath, changed: true, status: getModuleStatus(modulePath) };
+}
+
+/** Outcome of pruning the backup directory. */
+export interface PruneOutcome {
+  /** Backups that belong to the installed module and were left alone. */
+  kept: PatchRecord[];
+  /** Backups of other installs, or of replaced files, that were deleted. */
+  removed: PatchRecord[];
+  /** Backup directories with no readable record, deleted as leftovers. */
+  removedLeftovers: string[];
+  dryRun: boolean;
+}
+
+/** Compares install paths the way the platform does, so casing cannot split them. */
+function samePath(left: string, right: string): boolean {
+  const normalize = (value: string) => resolve(value).replace(/[\\/]+$/, '');
+  const a = normalize(left);
+  const b = normalize(right);
+  return process.platform === 'win32' ? a.toLowerCase() === b.toLowerCase() : a === b;
+}
+
+/**
+ * Deletes every backup except the one that belongs to the installed module.
+ *
+ * Backups accumulate by design: each browser update leaves the previous file
+ * behind, because restoring it over the new install would downgrade the browser.
+ * This trims the directory to what is still restorable. It refuses to run when
+ * no record belongs to the given path, which is what a mistyped path looks like
+ * and would otherwise delete every backup.
+ */
+export function pruneBackups(modulePath: string, options: { dryRun?: boolean } = {}): PruneOutcome {
+  const dryRun = options.dryRun ?? false;
+  const records = listRecords();
+  const known = records.filter((record) => samePath(record.modulePath, modulePath));
+  if (known.length === 0) {
+    throw new Error(
+      `No patch backup was recorded for ${modulePath}, so there is nothing to keep. ` +
+        'Point this at the install the patch was applied to.'
+    );
+  }
+
+  // The installed file is kept when it is either the original or the patched
+  // one, so a restore still works whether or not the patch is applied.
+  const hash = sha256(readFileSync(modulePath));
+  const kept = known.filter(
+    (record) => record.patchedSha256 === hash || record.originalSha256 === hash
+  );
+  const removed = records.filter((record) => !kept.includes(record));
+
+  if (!dryRun) {
+    for (const record of removed) {
+      rmSync(backupDirFor(record.originalSha256), { recursive: true, force: true });
+    }
+  }
+
+  // A directory without a readable record is a leftover from an interrupted
+  // run; nothing can restore from it.
+  const removedLeftovers: string[] = [];
+  const root = backupsDir();
+  if (existsSync(root)) {
+    const tracked = new Set(records.map((record) => backupDirFor(record.originalSha256)));
+    for (const entry of readdirSync(root, { withFileTypes: true })) {
+      if (!entry.isDirectory()) {
+        continue;
+      }
+      const dir = join(root, entry.name);
+      if (tracked.has(dir)) {
+        continue;
+      }
+      if (!dryRun) {
+        rmSync(dir, { recursive: true, force: true });
+      }
+      removedLeftovers.push(dir);
+    }
+  }
+
+  logDebug(
+    `${dryRun ? 'Would remove' : 'Removed'} ${removed.length} stealth backup(s)` +
+      ` and ${removedLeftovers.length} leftover(s); kept ${kept.length}`
+  );
+  return { kept, removed, removedLeftovers, dryRun };
 }
