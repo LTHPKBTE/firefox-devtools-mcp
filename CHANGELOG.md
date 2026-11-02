@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `README.zh-CN.md`, a Chinese translation of the README. The English file and the release archive link to it; no code is translated
+- `scripts/prepare-artifact.mjs` assembles `dist-package/` — the all-tools build as `dist/` plus `package.json`, both READMEs and the licenses — so the CI artifact has the same layout as the Release archive and can be installed with `npm install --omit=dev`
 - `docs/stealth.md` documents the patch itself: why `navigator.webdriver` cannot be changed from the page, the three bytes written, how a byte signature locates the function, the backup and record layout, and the measured before/after values
 
 ### Changed
+- The CI artifact is `firefox-devtools-mcp-package` instead of the raw `dist.moz/` folder, which held three `.js` files and no `package.json`, so it could not be installed. The READMEs list it as an install route for commits that have no Release yet
 - The README documents how to uninstall: restore the patched browser library, remove the client entry, then delete `~/.firefox-devtools-mcp`. `stealth help` says the same about `restore` and `prune`
 - The README rewrites how to connect to your own Firefox: set `remote.prefs.recommended=false` before connecting, start the browser with both remote-control flags, and close the session with `close_firefox_session` so the browser keeps running
 - The `.mcpb` manifest no longer passes `--pref remote.prefs.recommended=false`, which has no effect in `--connect-existing` mode

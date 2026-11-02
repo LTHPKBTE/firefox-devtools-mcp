@@ -50,6 +50,16 @@ npm run build:moz
 # 输出入口文件为 dist.moz/index.js
 ```
 
+**方式 D：CI 产物（尚未发布 Release 时）**
+每次推送到 `main` 都会上传该提交的构建结果：打开最近一次
+[CI 运行](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml)，下载
+`firefox-devtools-mcp-package` 制品并解压。目录结构与上面的压缩包一致
+（`dist/`、`package.json`、英文与中文 README、两份许可证），因此命令也相同：
+```bash
+npm install --omit=dev
+# 输出入口文件为 dist/index.js
+```
+
 ### 2. 配置 MCP 客户端
 
 服务端基于 `stdio` 通信。将 `/path/to/dist/index.js` 替换为本地实际绝对路径。

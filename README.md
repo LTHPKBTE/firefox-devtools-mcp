@@ -50,6 +50,16 @@ npm run build:moz
 # Binary is located at dist.moz/index.js
 ```
 
+**Option D: CI Artifact (no release yet)**
+Every push to `main` uploads the build of that commit: open the latest
+[CI run](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml), download the
+`firefox-devtools-mcp-package` artifact and unpack it. The layout is the same as the tarball above
+(`dist/`, `package.json`, READMEs, licenses), so the same commands apply:
+```bash
+npm install --omit=dev
+# Binary is located at dist/index.js
+```
+
 ### 2. Client Configuration
 
 The server communicates over `stdio`. Replace `/path/to/dist/index.js` with the absolute path on your system.

@@ -57,6 +57,15 @@ jobs:
       - name: Build
         run: npm run build:all
 
+      # A dist.moz/ folder on its own cannot be installed: the entry point
+      # imports selenium-webdriver and yargs, so it needs package.json beside it.
+      # Assemble the same layout the Release archive ships.
+      - name: Assemble downloadable package
+        if: >-
+          github.event_name != 'pull_request' && matrix.os == 'ubuntu-latest' &&
+          matrix.node-version == 20
+        run: node scripts/prepare-artifact.mjs
+
       - name: Install Firefox
         id: setup-firefox
         uses: browser-actions/setup-firefox@latest
@@ -85,6 +94,6 @@ jobs:
           matrix.node-version == 20
         uses: actions/upload-artifact@v7
         with:
-          name: dist.moz
-          path: dist.moz/
+          name: firefox-devtools-mcp-package
+          path: dist-package/
           retention-days: 7

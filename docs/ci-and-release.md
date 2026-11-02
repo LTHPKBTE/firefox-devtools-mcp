@@ -16,7 +16,12 @@ Workflows
   - Matrix: Node 20 and 22.
   - Steps: install → lint → format check → typecheck → build (both entries) → test.
   - Optional: uploads coverage to Codecov if `coverage/lcov.info` exists and `CODECOV_TOKEN` is set.
-  - Uploads the `dist.moz/` artifact (Node 20 job) for quick download.
+  - Uploads `dist-package/` (Node 20 job) for quick download. It is assembled by
+    `scripts/prepare-artifact.mjs` in the same layout as the Release archive:
+    the all-tools build renamed to `dist/`, plus `package.json`, the two READMEs and the
+    licenses. Uploading `dist.moz/` alone would hand out a folder that cannot be
+    installed — the entry point imports `selenium-webdriver` and `yargs`, which live in
+    `node_modules`.
 
 - PR Check (.github/workflows/pr-check.yml)
   - Fast checks on PR open/update: lint, format check, typecheck.
@@ -31,7 +36,7 @@ What each workflow produces
 
 | Trigger | Output | Where | Lifetime |
 | --- | --- | --- | --- |
-| push to `main`/`develop` | `dist.moz/` (all-tools build) | Actions run → Artifacts | 7 days |
+| push to `main`/`develop` | `dist-package/` (all-tools build as `dist/` + `package.json` + docs) | Actions run → Artifacts | 7 days |
 | tag `v*` | `firefox-devtools-mcp-vX.Y.Z.tar.gz`, `firefox-devtools-mcp-X.Y.Z.mcpb` | GitHub Releases | until deleted |
 
 Nothing is uploaded to npm or the MCP registry: the upstream package owns those names, so
