@@ -1,11 +1,14 @@
 # Firefox DevTools MCP
 
-[![npm version](https://badge.fury.io/js/@mozilla%2Ffirefox-devtools-mcp.svg)](https://www.npmjs.com/package/@mozilla/firefox-devtools-mcp)
-[![CI](https://github.com/mozilla/firefox-devtools-mcp/workflows/CI/badge.svg)](https://github.com/mozilla/firefox-devtools-mcp/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/mozilla/firefox-devtools-mcp/branch/main/graph/badge.svg)](https://codecov.io/gh/mozilla/firefox-devtools-mcp)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE-MIT) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE-APACHE)
+> **This is not a Mozilla repository.** This fork lives at
+> [LTHPKBTE/firefox-devtools-mcp](https://github.com/LTHPKBTE/firefox-devtools-mcp) and builds
+> the all-tools variant, which includes the Mozilla-only modules for inspecting Firefox's
+> privileged layer. The upstream project is
+> [mozilla/firefox-devtools-mcp](https://github.com/mozilla/firefox-devtools-mcp) — use it for
+> issues, releases and the official `@mozilla/firefox-devtools-mcp` package.
 
-<a href="https://glama.ai/mcp/servers/@mozilla/firefox-devtools-mcp"><img src="https://glama.ai/mcp/servers/@mozilla/firefox-devtools-mcp/badge" height="223" alt="Glama"></a>
+[![CI](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE-MIT) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE-APACHE)
 
 Model Context Protocol server that lets AI agents use Firefox. It has two main use cases:
 
@@ -14,9 +17,11 @@ Model Context Protocol server that lets AI agents use Firefox. It has two main u
 
 It controls Firefox through WebDriver BiDi (via Selenium WebDriver) and works with Claude Code, Claude Desktop, Cursor, Cline and other MCP clients.
 
-Repository: https://github.com/mozilla/firefox-devtools-mcp
+Repository: https://github.com/LTHPKBTE/firefox-devtools-mcp
 
-> **Note**: This MCP server requires a local Firefox browser installation and cannot run on cloud hosting services like glama.ai. Use `npx @mozilla/firefox-devtools-mcp@latest` to run locally, or use Docker with the provided Dockerfile.
+Upstream: https://github.com/mozilla/firefox-devtools-mcp
+
+> **Note**: This MCP server requires a local Firefox browser installation and cannot run on cloud hosting services like glama.ai. `npx @mozilla/firefox-devtools-mcp@latest` installs the upstream public build, which has no Mozilla-only modules; to get the all-tools build, build from source as described in [Build from source](#build-from-source).
 
 ## Security
 
@@ -178,14 +183,12 @@ npx @mozilla/firefox-devtools-mcp --tool-preset developer
 npx @mozilla/firefox-devtools-mcp --tools pages network console
 ```
 
-The `prefs` and `privileged` modules require `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1` and are only
-available in the Mozilla-internal build. The `launch` module requires the Mozilla-internal
-build too: it restarts Firefox under a caller-chosen binary, profile, environment and set of
-preferences, which is a configuration change the operator should own. Use `--pref`,
-`--firefox-path` and the other command-line options instead. The `bidi` module also requires
-the Mozilla-internal build: it sends any WebDriver BiDi command, so it gives access to what the
-other modules expose. The public package skips these modules even if requested and logs a
-warning naming the modules it dropped.
+The `prefs` and `privileged` modules require `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1`. The `launch`
+module restarts Firefox under a caller-chosen binary, profile, environment and set of
+preferences, which is a configuration change the operator should own. The `bidi` module sends
+any WebDriver BiDi command, so it gives access to what the other modules expose. This fork
+builds all four modules in; the upstream public package skips them even if requested and logs
+a warning naming the modules it dropped.
 
 ### Useful preferences (`--pref`)
 
@@ -291,18 +294,24 @@ write to arbitrary locations, including absolute paths outside that directory.
 
 Saved files can then be viewed for instance with Claude Code's `Read` tool without impacting context size.
 
-## Local development
+## Build from source
+
+The builds from this repository use the all-tools entry point (`src/index.moz.ts`), so every
+tool module is compiled in, including `prefs`, `privileged`, `launch` and `bidi`.
 
 ```bash
 npm install
-npm run build
+npm run build:moz
 
-# Run with Inspector against local build
-npx @modelcontextprotocol/inspector node dist/index.js --headless --viewport 1280x720
+# Run with Inspector against the local build
+npx @modelcontextprotocol/inspector node dist.moz/index.js --headless --viewport 1280x720
 
 # Or run in dev with hot reload
 npm run inspector:dev
 ```
+
+`npm run build:moz` writes `dist.moz/`. The release archive and the `.mcpb` bundle ship that
+directory as `dist/`.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for more details on local development, testing, and CI.
 
@@ -344,7 +353,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to file issues, run tests, and wo
 
 ## Author
 
-Maintained by [Mozilla](https://www.mozilla.org).
+Upstream project maintained by [Mozilla](https://www.mozilla.org). This fork is maintained by
+[LTHPKBTE](https://github.com/LTHPKBTE).
 
 ## License
 
