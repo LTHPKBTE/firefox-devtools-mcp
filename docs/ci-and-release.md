@@ -65,7 +65,8 @@ Client plugin manifests
   the field is metadata only and does not pin what gets installed.
 
 Notes
-- Use `@latest` in README examples to encourage npx usage against the upstream package.
-- Consumers of this fork install the release artifacts instead; see "Prebuilt downloads" in the
-  README.
+- The README documents only this fork's build: audit the source and build it, or install a
+  release artifact. Upstream's `npx` instructions stay in the upstream README, linked from there.
+- Each manifest still launches `npx @mozilla/firefox-devtools-mcp@latest`, which is the upstream
+  public build; none of them launches this fork's all-tools build.
 

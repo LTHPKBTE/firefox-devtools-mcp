@@ -21,7 +21,7 @@ Repository: https://github.com/LTHPKBTE/firefox-devtools-mcp
 
 Upstream: https://github.com/mozilla/firefox-devtools-mcp
 
-> **Note**: This MCP server requires a local Firefox browser installation and cannot run on cloud hosting services like glama.ai. `npx @mozilla/firefox-devtools-mcp@latest` installs the upstream public build, which has no Mozilla-only modules; see [Install a prebuilt build](#install-a-prebuilt-build-this-fork) for the all-tools build of this fork, or [Build from source](#build-from-source).
+> **Note**: This MCP server requires a local Firefox browser installation and cannot run on cloud hosting services like glama.ai. Start with [Install](#install): build it from audited source, or use an artifact this repository built. The upstream public build, which has no Mozilla-only modules, is documented in the [upstream README](https://github.com/mozilla/firefox-devtools-mcp#readme).
 
 ## Security
 
@@ -38,12 +38,31 @@ See [SECURITY.md](SECURITY.md) for a full breakdown of risks and how to report v
 - Node.js ≥ 20.19.0
 - Firefox 100+ installed (auto‑detected, or pass `--firefox-path`)
 
-## Install a prebuilt build (this fork)
+## Install
+
+**Audit the source and build it yourself.** This server drives your browser, and the `stealth`
+command rewrites a file inside your Firefox installation, so the code is worth reading before
+it runs. Clone the repository, read `src/`, then build it:
+
+```bash
+git clone https://github.com/LTHPKBTE/firefox-devtools-mcp
+cd firefox-devtools-mcp
+npm install
+npm run build:moz
+node dist.moz/index.js --auto-profile
+```
+
+See [Build from source](#build-from-source) for the test suite and the other scripts.
+
+The prebuilt artifacts below are produced by this repository's GitHub Actions from the tagged
+source, so you can compare them against the code before running them.
+
+### Install a prebuilt build (this fork)
 
 This fork is not published to npm or the MCP registry — those names belong to upstream — so
 everything is built by GitHub Actions and downloaded from GitHub:
 
-- **Release** (recommended) — [Releases](https://github.com/LTHPKBTE/firefox-devtools-mcp/releases),
+- **Release** — [Releases](https://github.com/LTHPKBTE/firefox-devtools-mcp/releases),
   created when a `vX.Y.Z` tag is pushed:
   - `firefox-devtools-mcp-vX.Y.Z.tar.gz` — the all-tools build, for any MCP client
   - `firefox-devtools-mcp-X.Y.Z.mcpb` — Claude Desktop extension, installed with one click
@@ -72,56 +91,54 @@ step; `dist/stealth-cli.js` and the `dist/snapshot.injected.global.js` browser s
 with it. Presets work as described below, and `--tool-preset all` is the one that also exposes
 the `stealth` tools.
 
-## Install and use with Claude Code or Codex (npx)
+Commands below assume that release layout (`dist/index.js`). A checkout built with
+`npm run build:moz` writes `dist.moz/index.js` instead, so adjust the path.
 
-These commands install the **upstream** package from npm, which is the public build without the
-Mozilla-only modules. Use them only if that is what you want; for the all-tools build, install a
-release as described above.
+## Register the server with your client
 
-### Option A — CLI
+The server speaks stdio, so any MCP client can run it. The client needs the absolute path to
+`dist/index.js` (or `dist.moz/index.js` for a checkout you built yourself).
 
-#### Claude Code
+### Claude Code
 
 ```bash
-claude mcp add firefox-devtools npx @mozilla/firefox-devtools-mcp@latest
+claude mcp add firefox-devtools node /absolute/path/to/dist/index.js
 
 # Headless + viewport via args
-claude mcp add firefox-devtools npx @mozilla/firefox-devtools-mcp@latest -- --headless --viewport 1280x720
+claude mcp add firefox-devtools node /absolute/path/to/dist/index.js -- --headless --viewport 1280x720
 
 # Or via environment variables
-claude mcp add firefox-devtools npx @mozilla/firefox-devtools-mcp@latest \
+claude mcp add firefox-devtools node /absolute/path/to/dist/index.js \
   --env START_URL=https://example.com \
   --env FIREFOX_HEADLESS=true
 ```
 
-#### Codex
+### Codex
 
 ```bash
-codex mcp add firefox-devtools -- npx @mozilla/firefox-devtools-mcp@latest
+codex mcp add firefox-devtools -- node /absolute/path/to/dist/index.js
 
 # Headless + viewport via args
 codex mcp add firefox-devtools -- \
-  npx @mozilla/firefox-devtools-mcp@latest -- --headless --viewport 1280x720
+  node /absolute/path/to/dist/index.js --headless --viewport 1280x720
 
 # Or via environment variables
 codex mcp add firefox-devtools \
   --env START_URL=https://example.com \
   --env FIREFOX_HEADLESS=true \
-  -- npx @mozilla/firefox-devtools-mcp@latest
+  -- node /absolute/path/to/dist/index.js
 ```
 
-### Option B — Edit the configuration file
+### Configuration file
 
-#### Claude Code
-
-Add to Claude Code’s mcp_settings.json:
+Claude Code, in its `mcp_settings.json`:
 
 ```json
 {
   "mcpServers": {
     "firefox-devtools": {
-      "command": "npx",
-      "args": ["-y", "@mozilla/firefox-devtools-mcp@latest", "--headless", "--viewport", "1280x720"],
+      "command": "node",
+      "args": ["/absolute/path/to/dist/index.js", "--headless", "--viewport", "1280x720"],
       "env": {
         "START_URL": "about:blank"
       }
@@ -130,30 +147,33 @@ Add to Claude Code’s mcp_settings.json:
 }
 ```
 
-#### Codex
-
-Add to ~/.codex/config.toml:
+Codex, in `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.firefox-devtools]
-command = "npx"
-args = ["-y", "@mozilla/firefox-devtools-mcp@latest", "--headless", "--viewport", "1280x720"]
+command = "node"
+args = ["/absolute/path/to/dist/index.js", "--headless", "--viewport", "1280x720"]
 
 [mcp_servers.firefox-devtools.env]
 START_URL = "about:blank"
 ```
 
-### Option C — Helper script (local dev build)
+On Windows, write the path with forward slashes (`C:/tools/dist/index.js`) or escaped
+backslashes.
 
-```bash
-npm run setup
-# Choose Claude Code; the script saves JSON to the right path
-```
+`npm run setup` writes the same JSON to the right file for Claude Code, using the local build.
+
+## Upstream package
+
+The upstream project publishes its public build to npm. For `npx @mozilla/firefox-devtools-mcp@latest`,
+the client-specific install commands and the rest of that package's documentation, see the
+[upstream README](https://github.com/mozilla/firefox-devtools-mcp#readme). That build contains
+only the public modules, so its instructions do not apply to this fork's build.
 
 ## Try it with MCP Inspector
 
 ```bash
-npx @modelcontextprotocol/inspector npx @mozilla/firefox-devtools-mcp@latest --start-url https://example.com --headless
+npx @modelcontextprotocol/inspector node dist/index.js --start-url https://example.com --headless
 ```
 
 Then call tools like:
@@ -213,13 +233,13 @@ surface, and use `--tool-preset slim` or an explicit `--tools` list to drop it.
 
 ```bash
 # Use the developer preset (adds network, console, debugging and profiler tools)
-npx @mozilla/firefox-devtools-mcp --tool-preset developer
+node dist/index.js --tool-preset developer
 
 # Enable only the modules you need
-npx @mozilla/firefox-devtools-mcp --tools pages network console
+node dist/index.js --tools pages network console
 
 # Or keep that list in a file: ["pages", "network", "console"]
-npx @mozilla/firefox-devtools-mcp --tool-preset ./my-tools.json
+node dist/index.js --tool-preset ./my-tools.json
 ```
 
 `--tool-preset` takes a built-in name or the path to a JSON file holding either an array of
@@ -301,13 +321,13 @@ Use `--android-device` to automate Firefox running on an Android device. Require
 adb devices
 
 # Launch Firefox for Android on the single connected device
-npx @mozilla/firefox-devtools-mcp --android-device auto --android-wipe-app-data
+node dist/index.js --android-device auto --android-wipe-app-data
 
 # Target a specific device
-npx @mozilla/firefox-devtools-mcp --android-device <serial> --android-wipe-app-data
+node dist/index.js --android-device <serial> --android-wipe-app-data
 
 # Use Firefox Nightly instead
-npx @mozilla/firefox-devtools-mcp --android-device <serial> --android-package org.mozilla.fenix --android-wipe-app-data
+node dist/index.js --android-device <serial> --android-package org.mozilla.fenix --android-wipe-app-data
 ```
 
 Port forwarding between the host and device is handled automatically by geckodriver.
@@ -321,7 +341,7 @@ Use `--connect-existing` to automate your real browsing session, with cookies, l
 firefox --marionette --remote-debugging-port
 
 # Run the MCP server
-npx @mozilla/firefox-devtools-mcp --connect-existing --marionette-port 2828
+node dist/index.js --connect-existing --marionette-port 2828
 ```
 
 Both flags are required because the MCP uses both WebDriver Classic (`--marionette`) and WebDriver BiDi (`--remote-debugging-port`). If Firefox is only started with `--marionette`, the MCP server fails to connect and asks you to restart Firefox with both flags.
@@ -408,31 +428,32 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for more details on local development, te
 - First run is slow: Selenium sets up the BiDi session; subsequent runs are faster.
 - Stale UIDs: a UID stays valid until its element is removed or the page navigates; take a fresh snapshot (`take_snapshot`) when a UID tool reports one is gone.
 - Windows 10: Error during discovery for MCP server 'firefox-devtools': MCP error -32000: Connection closed
-  - **Solution 1** Wrap with `cmd /c` ([details](https://github.com/modelcontextprotocol/servers/issues/1082#issuecomment-2791786310)):
+  - **Solution 1** Wrap the command with `cmd /c` ([details](https://github.com/modelcontextprotocol/servers/issues/1082#issuecomment-2791786310)):
 
     ```json
     "mcpServers": {
       "firefox-devtools": {
         "command": "cmd",
-        "args": ["/c", "npx", "-y", "@mozilla/firefox-devtools-mcp@latest"]
+        "args": ["/c", "node", "C:\\tools\\dist\\index.js"]
       }
     }
     ```
 
-  - **Solution 2** Use the absolute path to `npx` (adjust extension — `.cmd`, `.bat`, `.exe`, or `.ps1` — to match your setup):
+  - **Solution 2** Use the absolute path to `node` instead of relying on `PATH`:
 
     ```json
     "mcpServers": {
       "firefox-devtools": {
-        "command": "C:\\nvm4w\\nodejs\\npx.ps1",
-        "args": ["-y", "@mozilla/firefox-devtools-mcp@latest"]
+        "command": "C:\\nvm4w\\nodejs\\node.exe",
+        "args": ["C:\\tools\\dist\\index.js"]
       }
     }
     ```
 
 ## Versioning
 
-- Pre‑1.0 API: versions start at `0.x`. Use `@latest` with npx for the newest release.
+- Pre‑1.0 API: versions start at `0.x`. Each release is a `vX.Y.Z` tag on this repository; take
+  the newest one from [Releases](https://github.com/LTHPKBTE/firefox-devtools-mcp/releases).
 
 ## Contributing
 
