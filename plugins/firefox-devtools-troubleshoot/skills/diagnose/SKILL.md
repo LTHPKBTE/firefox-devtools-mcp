@@ -29,7 +29,7 @@ Since an absent tool list can't be attributed to a single cause from your side, 
 - Open **Customize > Plugins** in Claude Cowork and confirm `firefox-devtools-mcp` appears in the list.
 - Confirm they are currently in the **Cowork** tab, not the **Chat** tab — plugins only work in Cowork.
 
-- If the plugin is missing: direct them to the installation steps at https://github.com/mozilla/firefox-devtools-mcp.
+- If the plugin is missing: direct them to the installation steps at https://github.com/LTHPKBTE/firefox-devtools-mcp.
 - If the plugin is present but they were in Chat: ask them to switch to Cowork and retry.
 - If the plugin is present and they are already in Cowork: continue to the next step.
 
@@ -37,5 +37,9 @@ Since an absent tool list can't be attributed to a single cause from your side, 
 
 If all checks pass and the plugin still does not work, tell the user to report the issue:
 
-- File a bug on [Bugzilla](https://bugzilla.mozilla.org/enter_bug.cgi?format=__default__&blocked=2026717&product=Developer%20Infrastructure&component=Firefox%20MCP)
-- Or ask in the [#firefox-devtools-mcp Matrix room](https://chat.mozilla.org/#/room/#firefox-devtools-mcp:mozilla.org)
+- File it at https://github.com/LTHPKBTE/firefox-devtools-mcp/issues, saying how the server was
+  built (Release tarball, `.mcpb`, CI artifact, or local build).
+- Send them to [Bugzilla](https://bugzilla.mozilla.org/enter_bug.cgi?format=__default__&blocked=2026717&product=Developer%20Infrastructure&component=Firefox%20MCP)
+  only if they run the upstream package `@mozilla/firefox-devtools-mcp` and the problem
+  reproduces with it.
+- Questions about the upstream project go to the [#firefox-devtools-mcp Matrix room](https://chat.mozilla.org/#/room/#firefox-devtools-mcp:mozilla.org).

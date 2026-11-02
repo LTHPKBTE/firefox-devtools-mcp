@@ -6,8 +6,15 @@ English | [简体中文](README.zh-CN.md)
 > [LTHPKBTE/firefox-devtools-mcp](https://github.com/LTHPKBTE/firefox-devtools-mcp) and builds
 > the all-tools variant, which includes the Mozilla-only modules for inspecting Firefox's
 > privileged layer. The upstream project is
-> [mozilla/firefox-devtools-mcp](https://github.com/mozilla/firefox-devtools-mcp) — use it for
-> issues, releases and the official `@mozilla/firefox-devtools-mcp` package.
+> [mozilla/firefox-devtools-mcp](https://github.com/mozilla/firefox-devtools-mcp), which owns the
+> code this fork builds on, its releases and the official `@mozilla/firefox-devtools-mcp` package.
+>
+> **Where to report a problem.** If you run a build from this repository — a Release tarball, the
+> `.mcpb` bundle, a CI artifact, or your own `npm run build:moz` — report it in
+> [this repository's issues](https://github.com/LTHPKBTE/firefox-devtools-mcp/issues) and say how
+> the build was made. The upstream tracker takes reports only from people running the
+> upstream-distributed package who reproduced the problem with it: a problem caused by this
+> fork's changes does not reproduce there, so the report cannot be acted on.
 
 [![CI](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE-MIT) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE-APACHE)
@@ -70,7 +77,7 @@ everything is built by GitHub Actions and downloaded from GitHub:
 - **Release** — [Releases](https://github.com/LTHPKBTE/firefox-devtools-mcp/releases),
   created when a `vX.Y.Z` tag is pushed:
   - `firefox-devtools-mcp-vX.Y.Z.tar.gz` — the all-tools build, for any MCP client
-  - `firefox-devtools-mcp-X.Y.Z.mcpb` — Claude Desktop extension, installed with one click
+  - `firefox-devtools-mcp-X.Y.Z.mcpb` — Claude Desktop extension, opened with a double-click
 - **Latest `main` build** — Actions → [CI](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml)
   → newest run → *Artifacts* → `dist.moz/`. Needs a GitHub account and is deleted after 7 days.
 
@@ -208,7 +215,8 @@ step 3 removes.
 The upstream project publishes its public build to npm. For `npx @mozilla/firefox-devtools-mcp@latest`,
 the client-specific install commands and the rest of that package's documentation, see the
 [upstream README](https://github.com/mozilla/firefox-devtools-mcp#readme). That build contains
-only the public modules, so its instructions do not apply to this fork's build.
+only the public modules, so its instructions do not apply to this fork's build, and problems with
+it belong in the upstream tracker.
 
 ## Try it with MCP Inspector
 
@@ -456,7 +464,7 @@ firefox -P firefox-mcp --marionette --remote-debugging-port
 > [stealth module](#hiding-the-webdriver-flag-stealth-module) can make
 > `navigator.webdriver` read false while a session is active.
 
-## Tool overview
+## Tools
 
 See [docs/tools.md](docs/tools.md) for the full list of tools by module, with
 descriptions and parameters (generated from the source).

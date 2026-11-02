@@ -2,7 +2,18 @@
 
 ## Reporting Security Issues
 
-Please report security vulnerabilities through [Bugzilla](https://bugzilla.mozilla.org/enter_bug.cgi?format=__default__&blocked=2026717&product=Developer%20Infrastructure&component=Firefox%20MCP).
+Where a report goes depends on the build, as the [README](README.md) describes:
+
+- **A build from this repository** — a Release tarball, the `.mcpb` bundle, a CI artifact, or
+  your own `npm run build:moz` — goes to
+  [this repository's issues](https://github.com/LTHPKBTE/firefox-devtools-mcp/issues). Name the
+  affected part and say that the report is sensitive, but leave out a working exploit and the
+  steps that reproduce it until there is a private channel to send them to.
+- **The upstream package** (`@mozilla/firefox-devtools-mcp`) goes to
+  [Bugzilla](https://bugzilla.mozilla.org/enter_bug.cgi?format=__default__&blocked=2026717&product=Developer%20Infrastructure&component=Firefox%20MCP),
+  and only after reproducing the problem with that package.
+
+This repository is maintained on a best-effort basis and gives no response or fix timeline.
 
 ## Prompt Injection
 
@@ -35,7 +46,7 @@ Lets the agent execute arbitrary JavaScript in any page context. If the agent is
 
 Tools that operate in Firefox's privileged (chrome) context: listing and selecting privileged contexts, evaluating privileged scripts, reading and writing Firefox preferences. These tools require the `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1` environment variable to be set, which is checked by the WebDriver implementation in Firefox to allow using any command that targets privileged contexts. They are only available in the Mozilla-internal build; the public package skips them even if requested.
 
-Unless you are developing or modifying Firefox itself, you likely do not need these modules. To set preferences at startup, you can always use the `--pref name=value` command-line argument instead. If you are missing commands or features to debug web content, please file a bug on [Bugzilla](https://bugzilla.mozilla.org/enter_bug.cgi?format=__default__&blocked=2026717&product=Developer%20Infrastructure&component=Firefox%20MCP) or reach out in the [#firefox-devtools-mcp Matrix room](https://chat.mozilla.org/#/room/#firefox-devtools-mcp:mozilla.org).
+Unless you are developing or modifying Firefox itself, you likely do not need these modules. To set preferences at startup, you can always use the `--pref name=value` command-line argument instead. For the upstream package, missing commands or features are reported on [Bugzilla](https://bugzilla.mozilla.org/enter_bug.cgi?format=__default__&blocked=2026717&product=Developer%20Infrastructure&component=Firefox%20MCP) or raised in the [#firefox-devtools-mcp Matrix room](https://chat.mozilla.org/#/room/#firefox-devtools-mcp:mozilla.org); for a build from this repository, use its issues.
 
 > **Warning:** When the privileged modules are used together with `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1`, the agent gains access to privileged Firefox APIs with no web-content sandbox boundary. Depending on what the agent does with that access, this can extend to operating-system–level actions. Only use this combination in fully isolated environments.
 

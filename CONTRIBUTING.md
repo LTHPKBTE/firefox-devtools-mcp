@@ -2,12 +2,20 @@
 
 ## Issues
 
-Issues are tracked on [Bugzilla](https://bugzilla.mozilla.org) under **product: Developer Infrastructure**, **component: Firefox MCP**.
+Where a report goes depends on the build that produced it:
 
-- [File a new issue](https://bugzilla.mozilla.org/enter_bug.cgi?format=__default__&blocked=2026717&product=Developer%20Infrastructure&component=Firefox%20MCP)
-- [Meta bug (tracks all firefox-devtools-mcp issues)](https://bugzilla.mozilla.org/show_bug.cgi?id=2026717)
+- **A build from this repository** — a Release tarball, the `.mcpb` bundle, a CI artifact, or a
+  local `npm run build:moz` — goes to [this repository's issues](https://github.com/LTHPKBTE/firefox-devtools-mcp/issues),
+  with a note on how the build was made. Reports about the `stealth` module, the all-tools
+  presets, the release workflow or these documents can only be handled here.
+- **The upstream package** (`@mozilla/firefox-devtools-mcp`) goes to
+  [Bugzilla](https://bugzilla.mozilla.org), under **product: Developer Infrastructure**,
+  **component: Firefox MCP**, and only after reproducing the problem with that package. Anything
+  this fork changed does not reproduce there.
 
-For questions and discussion, join the [#firefox-devtools-mcp Matrix room](https://chat.mozilla.org/#/room/#firefox-devtools-mcp:mozilla.org).
+Upstream trackers: [file a new bug](https://bugzilla.mozilla.org/enter_bug.cgi?format=__default__&blocked=2026717&product=Developer%20Infrastructure&component=Firefox%20MCP) ·
+[meta bug for firefox-devtools-mcp](https://bugzilla.mozilla.org/show_bug.cgi?id=2026717) ·
+[#firefox-devtools-mcp Matrix room](https://chat.mozilla.org/#/room/#firefox-devtools-mcp:mozilla.org).
 
 ## Local development
 

@@ -5,8 +5,13 @@ English | [简体中文](README.zh-CN.md)
 > **这不是 Mozilla 的仓库。** 本 fork 位于
 > [LTHPKBTE/firefox-devtools-mcp](https://github.com/LTHPKBTE/firefox-devtools-mcp)，构建的是
 > 全工具集版本，包含用于检查 Firefox 特权层的 Mozilla 专用模块。上游项目是
-> [mozilla/firefox-devtools-mcp](https://github.com/mozilla/firefox-devtools-mcp)：问题反馈、
-> 正式发布和官方 `@mozilla/firefox-devtools-mcp` 包请走上游。
+> [mozilla/firefox-devtools-mcp](https://github.com/mozilla/firefox-devtools-mcp)，本 fork 所基于的
+> 代码、上游的发布以及官方 `@mozilla/firefox-devtools-mcp` 包均由它维护。
+>
+> **问题该提在哪里。** 如果你运行的是本仓库构建的版本——Release tar 包、`.mcpb` 扩展、CI 产物，
+> 或你自己 `npm run build:moz` 的结果——请提到[本仓库的 issues](https://github.com/LTHPKBTE/firefox-devtools-mcp/issues)，
+> 并说明构建来源。上游追踪器只接受使用上游分发版本、并在该版本上复现过的问题：本 fork 改动导致的
+> 问题在上游无法复现，报告过去也无法处理。
 
 [![CI](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE-MIT) [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE-APACHE)
@@ -63,7 +68,7 @@ node dist.moz/index.js --auto-profile
 
 - **Release** —— [Releases](https://github.com/LTHPKBTE/firefox-devtools-mcp/releases)，推送 `vX.Y.Z` tag 时创建：
   - `firefox-devtools-mcp-vX.Y.Z.tar.gz` —— 全工具集构建，适用于任何 MCP 客户端
-  - `firefox-devtools-mcp-X.Y.Z.mcpb` —— Claude Desktop 扩展，一键安装
+  - `firefox-devtools-mcp-X.Y.Z.mcpb` —— Claude Desktop 扩展，双击安装
 - **最新的 `main` 构建** —— Actions → [CI](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml) → 最近一次运行 → *Artifacts* → `dist.moz/`。需要 GitHub 账号，且 7 天后删除。
 
 从 tar 包安装：
@@ -175,7 +180,7 @@ geckodriver 要么来自 `PATH` 或 `~/.cache/selenium`（与其他 Selenium 项
 
 ## 上游 npm 包
 
-上游项目把它的公共构建发布到 npm。`npx @mozilla/firefox-devtools-mcp@latest` 的用法、各客户端安装命令以及该包其余文档，见[上游 README](https://github.com/mozilla/firefox-devtools-mcp#readme)。那个构建只包含公共模块，所以它的说明不适用于本 fork 的构建。
+上游项目把它的公共构建发布到 npm。`npx @mozilla/firefox-devtools-mcp@latest` 的用法、各客户端安装命令以及该包其余文档，见[上游 README](https://github.com/mozilla/firefox-devtools-mcp#readme)。那个构建只包含公共模块，所以它的说明不适用于本 fork 的构建，相关问题也归上游追踪器。
 
 ## 配合 MCP Inspector 试用
 
@@ -368,7 +373,7 @@ firefox -P firefox-mcp --marionette --remote-debugging-port
 > 或者像上面那样使用独立的配置文件。[stealth 模块](#stealth-模块)可以在会话期间
 > 让 `navigator.webdriver` 读作 false。
 
-## 工具总览
+## 工具
 
 逐个模块的工具清单、说明和参数见 [docs/tools.md](docs/tools.md)（由源码生成）。
 

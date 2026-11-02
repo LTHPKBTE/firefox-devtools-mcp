@@ -8,6 +8,13 @@ allowed-tools:
 
 # Filing a bug
 
+## Scope
+
+This skill files **upstream** bugs: Firefox, WebDriver, and the `@mozilla/firefox-devtools-mcp`
+package. Defects in code this fork changed — the `stealth` module, the all-tools presets, the
+release workflow, these documents — belong in this repository's issues instead. Both cases are
+described in the "Issues" section of `CONTRIBUTING.md`.
+
 ## Overview
 
 File a bug by opening a prefilled Bugzilla "enter bug" form in the user's browser.

@@ -84,5 +84,6 @@ The plugin enables the following by default:
 
 ## Links
 
-- [Repository](https://github.com/mozilla/firefox-devtools-mcp)
-- [npm](https://www.npmjs.com/package/@mozilla/firefox-devtools-mcp)
+- [Repository](https://github.com/LTHPKBTE/firefox-devtools-mcp): issues for this build go here
+- [Upstream repository](https://github.com/mozilla/firefox-devtools-mcp)
+- [npm](https://www.npmjs.com/package/@mozilla/firefox-devtools-mcp): the upstream package

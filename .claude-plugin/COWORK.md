@@ -63,7 +63,7 @@ Cowork is often vague about the root cause — it may say things like "the MCP s
 - **Node.js** is missing or outdated. Run `node --version` in a terminal to check. It must be 20.19.0 or higher. If not, download it from [nodejs.org](https://nodejs.org).
 - The plugin is not installed. Check that it is listed after clicking on **Customize > Plugins**.
 
-If none of the above helps, file a bug on [Bugzilla](https://bugzilla.mozilla.org/enter_bug.cgi?format=__default__&blocked=2026717&product=Developer%20Infrastructure&component=Firefox%20MCP) or ask in the [#firefox-devtools-mcp Matrix room](https://chat.mozilla.org/#/room/#firefox-devtools-mcp:mozilla.org).
+If none of the above helps, file an issue at https://github.com/LTHPKBTE/firefox-devtools-mcp/issues and say how the server was built. [Bugzilla](https://bugzilla.mozilla.org/enter_bug.cgi?format=__default__&blocked=2026717&product=Developer%20Infrastructure&component=Firefox%20MCP) is for the upstream package `@mozilla/firefox-devtools-mcp`, and only once the problem reproduces with it.
 
 **Q: Firefox closes after Claude has executed its task.**
 
