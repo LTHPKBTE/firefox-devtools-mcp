@@ -448,10 +448,28 @@ export interface PatchOutcome {
   status: ModuleStatus;
 }
 
-/** Windows reports a loaded library as busy, which is how a running browser shows up. */
-function isBusyError(error: unknown): boolean {
+/**
+ * Turns the two ways a write to an installed module fails into a diagnosis.
+ *
+ * Windows opens a loaded library without write sharing, so a running browser
+ * shows up as EBUSY, while an install under Program Files without elevation
+ * shows up as EPERM — measuring both is what keeps the message honest.
+ */
+function describeWriteFailure(error: unknown, modulePath: string): Error | null {
   const code = (error as NodeJS.ErrnoException | undefined)?.code;
-  return code === 'EBUSY' || code === 'EPERM' || code === 'EACCES' || code === 'ETXTBSY';
+  if (code === 'EBUSY' || code === 'ETXTBSY') {
+    return new Error(
+      `Cannot write to ${modulePath}: the browser is running from that install. ` +
+        'Close every browser window first, then try again.'
+    );
+  }
+  if (code === 'EPERM' || code === 'EACCES') {
+    return new Error(
+      `Cannot write to ${modulePath}: the file is not writable by this user. ` +
+        'Installs under Program Files need the server to run elevated.'
+    );
+  }
+  return null;
 }
 
 /**
@@ -516,13 +534,7 @@ export function patchWebdriverFlag(modulePath: string): PatchOutcome {
   try {
     writeInPlace(modulePath, site.fileOffset, PATCH_BYTES);
   } catch (error) {
-    if (isBusyError(error)) {
-      throw new Error(
-        `Cannot write to ${modulePath}: the browser is running from that install. ` +
-          'Close every browser window first, then run the patch again.'
-      );
-    }
-    throw error;
+    throw describeWriteFailure(error, modulePath) ?? error;
   }
 
   const patchedData = readFileSync(modulePath);
@@ -588,13 +600,7 @@ export function restoreModule(modulePath: string): PatchOutcome {
   try {
     copyFileSync(backup, modulePath);
   } catch (error) {
-    if (isBusyError(error)) {
-      throw new Error(
-        `Cannot write to ${modulePath}: the browser is running from that install. ` +
-          'Close every browser window first, then restore again.'
-      );
-    }
-    throw error;
+    throw describeWriteFailure(error, modulePath) ?? error;
   }
 
   const restored = readFileSync(modulePath);

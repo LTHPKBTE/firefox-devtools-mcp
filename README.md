@@ -207,13 +207,15 @@ and the session still works, and restoring the file brings `true` back.
   `~/.firefox-devtools-mcp/stealth/backups/<sha256>/`, then patches it in place.
 - `restore_navigator_webdriver` copies that backup back.
 
-The browser must be closed: the library is loaded and Windows refuses the write otherwise. The
-function is located by a byte signature rather than a fixed address, so the same patch applies
-across rebuilds; when a build does not match a known signature the tools report `unrecognized`
-and change nothing. A browser update replaces the patched file with the vendor one, so it also
-reports `unrecognized` until a signature for the new build is added, and the old backup is kept
-but never restored over the new install. Signatures currently cover the Windows x64 153 build;
-the patch is implemented for Windows and Linux, not macOS.
+The browser must be closed: the library is loaded and Windows refuses the write otherwise, which
+the tools report as a busy file. Installs under `Program Files` also need the server to run
+elevated, which they report as a permission error instead. The function is located by a byte
+signature rather than a fixed address, so the same patch applies across rebuilds; when a build
+does not match a known signature the tools report `unrecognized` and change nothing. A browser
+update replaces the patched file with the vendor one, so it also reports `unrecognized` until a
+signature for the new build is added, and the old backup is kept but never restored over the new
+install. Signatures currently cover the Windows x64 153 build; the patch is implemented for
+Windows and Linux, not macOS.
 
 ### Useful preferences (`--pref`)
 
