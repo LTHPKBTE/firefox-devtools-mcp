@@ -34,7 +34,7 @@ Commands:
   prune     Delete backups other than the one for the current install
 
 Options:
-  --firefox-path <path>  Browser executable to work on (default: detected install)
+  --firefox-path <path>  Browser executable to work on (default: detected Firefox install)
   --dry-run              With prune: list what would be deleted, delete nothing
   --json                 Print the result as JSON
 
