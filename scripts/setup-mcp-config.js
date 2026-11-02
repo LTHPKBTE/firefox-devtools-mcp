@@ -74,28 +74,34 @@ async function main() {
 
   const clientChoice = (await question('\nSelect option (1-4) [2]: ')) || '2';
 
-  // Get project path
+  // Get project path. Prefer the all-tools bundle, then the release layout (dist/index.js).
   const projectPath = path.resolve(__dirname, '..');
-  const distIndexPath = path.join(projectPath, 'dist', 'index.js');
+  const candidates = [
+    path.join(projectPath, 'dist.moz', 'index.js'),
+    path.join(projectPath, 'dist', 'index.js'),
+  ];
+  let distIndexPath = candidates.find((candidate) => fs.existsSync(candidate));
 
   // Check if we need to build first
-  const srcIndexPath = path.join(projectPath, 'src', 'index.ts');
-  if (!fs.existsSync(distIndexPath) && fs.existsSync(srcIndexPath)) {
-    console.log(`${colors.yellow}⚠️  Dist file not found. Building project...${colors.reset}`);
+  if (!distIndexPath) {
+    console.log(
+      `${colors.yellow}⚠️  Build not found. Building the all-tools bundle...${colors.reset}`
+    );
     try {
-      execSync('npm run build', { cwd: projectPath, stdio: 'inherit' });
+      execSync('npm run build:moz', { cwd: projectPath, stdio: 'inherit' });
       console.log(`${colors.green}✓ Build completed${colors.reset}\n`);
     } catch (error) {
       console.log(
-        `${colors.red}❌ Build failed. Please run 'npm run build' manually${colors.reset}`
+        `${colors.red}❌ Build failed. Please run 'npm run build:moz' manually${colors.reset}`
       );
       process.exit(1);
     }
+    distIndexPath = candidates[0];
   }
 
   if (!fs.existsSync(distIndexPath)) {
-    console.log(`${colors.red}❌ Dist file not found at: ${distIndexPath}${colors.reset}`);
-    console.log(`${colors.yellow}Please run 'npm run build' first${colors.reset}`);
+    console.log(`${colors.red}❌ Server entry point not found at: ${distIndexPath}${colors.reset}`);
+    console.log(`${colors.yellow}Please run 'npm run build:moz' first${colors.reset}`);
     process.exit(1);
   }
 
