@@ -13,10 +13,10 @@ For questions and discussion, join the [#firefox-devtools-mcp Matrix room](https
 
 ```bash
 npm install
-npm run build
+npm run build:moz
 
 # Run with Inspector against local build
-npx @modelcontextprotocol/inspector node dist/index.js --headless --viewport 1280x720
+npx @modelcontextprotocol/inspector node dist.moz/index.js --headless --viewport 1280x720
 
 # Or run in dev with hot reload
 npm run inspector:dev
@@ -58,7 +58,7 @@ See [docs/testing.md](docs/testing.md) for full details on running specific test
 
 ## CI and Release
 
-GitHub Actions for CI, Release, and npm publish are included. See [docs/ci-and-release.md](docs/ci-and-release.md) for details and required secrets.
+GitHub Actions for CI and Release are included. See [docs/ci-and-release.md](docs/ci-and-release.md) for details.
 
 ## Code of Conduct
 
