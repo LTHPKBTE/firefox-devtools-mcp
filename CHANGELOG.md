@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `README.zh-CN.md`, a Chinese translation of the README. The English file and the release archive link to it; no code is translated
+- `docs/stealth.md` documents the patch itself: why `navigator.webdriver` cannot be changed from the page, the three bytes written, how a byte signature locates the function, the backup and record layout, and the measured before/after values
 
 ### Changed
 - The README documents how to uninstall: restore the patched browser library, remove the client entry, then delete `~/.firefox-devtools-mcp`. `stealth help` says the same about `restore` and `prune`
@@ -18,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Both READMEs are rewritten as statements and commands instead of explanations; the security section and `--connect-existing` now describe the same trade-off: a dedicated profile by default, the everyday profile as the explicit, opt-in case
 - `--connect-existing` and the dedicated-profile setup are two equal options under one heading, and the duplicated `remote.prefs.recommended` guidance points at one place
 - The README's tool list heading is `## Tools` instead of `## Tool overview`, and `Saving bulky output to disk` is a top-level section
+- Both READMEs restructure around the task instead of the flag list: `What this fork adds` states the differences from upstream, the two install routes (a build of this repository, or a local build) sit side by side under `## Install`, and task guides (`--connect-existing`, `stealth`, Android, `saveTo`) are separated from the `## CLI reference` they used to be nested under
+- The install instructions are stated once each: the duplicated `npm install && npm run build:moz` block under `Build from source` is gone, and the remaining build commands live in `## Install` and `## Development`
+- `## Security` moves after the guides and the CLI reference, and is now three bullets; the `navigator.webdriver` mechanism, byte signature, backup layout and measurements move to `docs/stealth.md`, leaving usage in the README
 
 ### Fixed
 - `stealth` accepts its options before or after the command, and a missing command prints the usage instead of `Unknown argument` naming the path
