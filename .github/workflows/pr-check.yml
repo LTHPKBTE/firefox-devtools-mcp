@@ -40,5 +40,5 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
-      - name: Build
-        run: npm run build
+      - name: Build all-tools bundle
+        run: npm run build:moz

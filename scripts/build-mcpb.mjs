@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Builds the firefox-devtools-mcp .mcpb bundle (Claude Desktop extension).
- * Assembles a staging directory with dist/, production node_modules and
- * manifest.json, then runs `mcpb pack` on it.
+ * Assembles a staging directory with the all-tools build, production
+ * node_modules and manifest.json, then runs `mcpb pack` on it.
  */
 
 import { readFileSync, writeFileSync, cpSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
@@ -15,13 +15,13 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
 const manifest = JSON.parse(readFileSync(resolve(root, 'manifest.mcpb.json'), 'utf8'));
 
-console.log('Building server...');
-execSync('npm run build', { cwd: root, stdio: 'inherit' });
+console.log('Building all-tools bundle...');
+execSync('npm run build:moz', { cwd: root, stdio: 'inherit' });
 
 const stagingDir = mkdtempSync(resolve(tmpdir(), 'firefox-devtools-mcpb-'));
 
 try {
-  cpSync(resolve(root, 'dist'), resolve(stagingDir, 'dist'), { recursive: true });
+  cpSync(resolve(root, 'dist.moz'), resolve(stagingDir, 'dist'), { recursive: true });
   for (const file of ['README.md', 'LICENSE-MIT', 'LICENSE-APACHE', 'package.json', 'package-lock.json']) {
     cpSync(resolve(root, file), resolve(stagingDir, file));
   }

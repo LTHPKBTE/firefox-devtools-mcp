@@ -51,8 +51,8 @@ jobs:
       - name: Type check tests
         run: npm run typecheck:tests
 
-      - name: Build
-        run: npm run build
+      - name: Build all-tools bundle
+        run: npm run build:moz
 
       - name: Install Firefox
         id: setup-firefox
@@ -82,6 +82,6 @@ jobs:
           matrix.node-version == 20
         uses: actions/upload-artifact@v7
         with:
-          name: dist
-          path: dist/
+          name: dist.moz
+          path: dist.moz/
           retention-days: 7
