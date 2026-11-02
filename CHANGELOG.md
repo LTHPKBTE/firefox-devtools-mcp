@@ -15,7 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The README rewrites how to connect to your own Firefox: set `remote.prefs.recommended=false` before connecting, start the browser with both remote-control flags, and close the session with `close_firefox_session` so the browser keeps running
 - The `.mcpb` manifest no longer passes `--pref remote.prefs.recommended=false`, which has no effect in `--connect-existing` mode
 - Documentation splits issue reporting by build: a Release tarball, the `.mcpb` bundle, a CI artifact or a local build is reported in this repository, while the upstream tracker takes only reports reproduced with the upstream package
-- The README's tool list heading is `## Tools` instead of `## Tool overview`
+- Both READMEs are rewritten as statements and commands instead of explanations; the security section and `--connect-existing` now describe the same trade-off: a dedicated profile by default, the everyday profile as the explicit, opt-in case
+- `--connect-existing` and the dedicated-profile setup are two equal options under one heading, and the duplicated `remote.prefs.recommended` guidance points at one place
+- The README's tool list heading is `## Tools` instead of `## Tool overview`, and `Saving bulky output to disk` is a top-level section
 
 ### Fixed
 - `stealth` accepts its options before or after the command, and a missing command prints the usage instead of `Unknown argument` naming the path

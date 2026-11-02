@@ -23,7 +23,7 @@ This risk is inherent to any agent that reads web content. Mitigations:
 
 - Only visit pages whose content you control or trust.
 - Keep capabilities to the minimum needed (see **Tool modules and presets** and **Risky Flags** below).
-- Use a dedicated profile with no sensitive data (see **Profile and Environment** below).
+- Run a profile that holds no sensitive data (see **Profile and Environment** below).
 
 ## Tool modules and presets
 
@@ -72,7 +72,11 @@ Combined with prompt injection, this turns a page's content into arbitrary file 
 
 ### `--connect-existing`
 
-Connects to an already-running Firefox instance instead of launching a fresh one. If that instance is your regular browser profile, the agent has access to your cookies, saved passwords, active sessions, and browsing history. Always ensure the target instance uses a dedicated profile.
+Connects to an already-running Firefox instance instead of launching a fresh one, so the agent
+reaches the data of whichever profile that instance runs: cookies, saved passwords, active
+sessions, history. That is the mode's purpose, and why it is opt-in. Create the instance with a
+dedicated profile (`firefox -CreateProfile`) when the agent should not reach your own data; see
+the README's [Connect to an existing Firefox](README.md#connect-to-an-existing-firefox).
 
 ### `--accept-insecure-certs`
 
@@ -80,7 +84,7 @@ Disables TLS certificate validation, allowing the agent to visit sites with self
 
 ## Profile and Environment
 
-**Use a dedicated profile.** Never point the MCP server at your regular Firefox profile. Create a clean, separate profile for automation. This limits the data the agent can access and prevents a compromised session from touching your personal browsing data.
+**Use a profile that holds no sensitive data.** For automation, create a clean, separate profile. It limits the data the agent can access and keeps a compromised session away from personal browsing data. `--connect-existing` is the exception where an existing session is the target: the profile that instance runs is exactly what the agent can reach — see [Connect to an existing Firefox](README.md#connect-to-an-existing-firefox).
 
 **Consider a sandboxed environment.** For automation that involves untrusted content, or when the privileged modules are required, run Firefox inside an isolated environment (a container, VM, or dedicated OS user account), ideally with a network proxy to enforce outbound restrictions. This limits what an attacker can reach even if the agent is fully compromised.
 
