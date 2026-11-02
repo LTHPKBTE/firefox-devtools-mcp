@@ -27,7 +27,7 @@ Upstream: https://github.com/mozilla/firefox-devtools-mcp
 
 Browser MCP servers carry inherent risks. A few key practices:
 
-- **Use a dedicated Firefox profile.** Never run the server against your regular profile — the agent has access to whatever the browser can reach, including cookies and saved sessions.
+- **Use a dedicated Firefox profile.** Never run the server against your regular profile — the agent has access to whatever the browser can reach, including cookies and saved sessions. `--connect-existing` exists for the cases where your own session is the point; it gives the agent the same reach, so use it deliberately and only while a session is active. See [Connect to an existing Firefox](#connect-to-an-existing-firefox-the-agent-drives-your-own-browser).
 - **Be cautious about which sites you visit.** Pages can return content designed to manipulate the agent (prompt injection). Stick to sites you control or trust.
 - **Enable only the tool modules you need.** The default `basic` preset already includes `evaluate_script`; `--tool-preset slim` drops it. Higher presets such as `--tool-preset developer` (debugging, network, console, profiler) and `--tool-preset mozilla` (privileged context) expand what the agent can do further.
 
@@ -56,6 +56,9 @@ See [Build from source](#build-from-source) for the test suite and the other scr
 
 The prebuilt artifacts below are produced by this repository's GitHub Actions from the tagged
 source, so you can compare them against the code before running them.
+
+Nothing is installed system-wide, and [Uninstall](#uninstall) covers the reverse steps: undo the
+browser patch, remove the client entry, delete the extracted and data directories.
 
 ### Install a prebuilt build (this fork)
 
@@ -163,6 +166,41 @@ backslashes.
 
 `npm run setup` writes the same JSON to the right file for Claude Code, using the local build.
 
+## Uninstall
+
+There is no installer, service or global package to remove: the server is a directory you
+extracted or built, and everything else it writes lives under `~/.firefox-devtools-mcp`
+(`%USERPROFILE%\.firefox-devtools-mcp` on Windows). Three steps, in this order.
+
+**1. Undo the browser patch, if you applied it.** In a shell started as administrator, with
+Firefox closed:
+
+```bash
+node dist/stealth-cli.js restore --firefox-path "C:\Program Files\Waterfox\waterfox.exe"
+node dist/stealth-cli.js prune
+```
+
+`restore` copies the backup over the patched library and `prune` deletes the backups of
+superseded installs. One backup of the file now installed is kept on purpose, because deleting
+it would make `restore` impossible; step 3 removes it. Skip both commands if you never ran
+`patch`. If the browser was updated in the meantime, `status` reports `unrecognized` and the
+vendor's file is already in place, so there is nothing to restore.
+
+**2. Remove the client entry.** `claude mcp remove firefox-devtools`, or delete the
+`firefox-devtools` block from the JSON or TOML shown in
+[Register the server with your client](#register-the-server-with-your-client). If you installed
+the `.mcpb` bundle, remove the extension in Claude Desktop's settings instead.
+
+**3. Delete the files.** The extracted directory, and the data directory `~/.firefox-devtools-mcp`
+(`%USERPROFILE%\.firefox-devtools-mcp`). The data directory holds the `--auto-profile` or
+`--profile-path` profile this server created, `saveTo` output, captured Firefox logs, and the
+stealth backups and records. Deleting it discards the logins that profile collected while the
+agent used it; your own Firefox profile is not touched.
+
+geckodriver is either resolved from `PATH` or `~/.cache/selenium` — shared with other Selenium
+projects, so leaving it is usually right — or downloaded inside the extracted directory, which
+step 3 removes.
+
 ## Upstream package
 
 The upstream project publishes its public build to npm. For `npx @mozilla/firefox-devtools-mcp@latest`,
@@ -192,13 +230,14 @@ You can pass flags or environment variables (names on the right):
 - `--headless` — run without UI (`FIREFOX_HEADLESS=true`)
 - `--viewport 1280x720` — initial window size
 - `--profile-path` — use a specific Firefox profile. Firefox runs in a `firefox_devtools_mcp_profile` subfolder of that path, marked with a `.firefox-devtools-mcp` file; pointing `--profile-path` at a marked profile reuses it directly
+- `--auto-profile` — reuse a persistent profile stored under `~/.firefox-devtools-mcp/`, so logins survive between runs. Scoped to the binary when `--firefox-path` is given (`AUTO_PROFILE=true`)
 - `--firefox-arg` — extra Firefox arguments (repeatable)
 - `--start-url` — open this URL on start (`START_URL`)
 - `--accept-insecure-certs` — ignore TLS errors (`ACCEPT_INSECURE_CERTS=true`)
-- `--connect-existing` — attach to an already-running Firefox instead of launching a new one (`CONNECT_EXISTING=true`)
+- `--connect-existing` — attach to an already-running Firefox instead of launching a new one (`CONNECT_EXISTING=true`). See [Connect to an existing Firefox](#connect-to-an-existing-firefox-the-agent-drives-your-own-browser)
 - `--marionette-port` — Marionette port for connect-existing mode, default 2828 (`MARIONETTE_PORT`)
 - `--idle-timeout` — seconds without tool calls after which a connect-existing session releases Firefox, default 1800. Firefox accepts one client at a time, so other clients can only connect once it is released. The next tool call reconnects and selects the tab that is active in Firefox at that moment (`IDLE_TIMEOUT`)
-- `--pref name=value` — set Firefox preference at startup via `moz:firefoxOptions` (repeatable)
+- `--pref name=value` — set Firefox preference at startup via `moz:firefoxOptions` (repeatable). Not applied with `--connect-existing`, which does not launch the browser; set those prefs in `about:config` instead
 - `--tool-preset` — select which tool modules to enable: `slim`, `basic` (default), `developer`, `mozilla`, or `all`. See [Tool modules and presets](#tool-modules-and-presets). (`TOOL_PRESET`)
 - `--tools` — explicit list of tool modules to enable, overriding `--tool-preset` entirely (e.g. `--tools pages network script`). See [Tool modules and presets](#tool-modules-and-presets).
 - `--enable-script` — _deprecated, use `--tool-preset developer` or `--tools ... script debugging`._ Selects the `developer` tool preset. (`ENABLE_SCRIPT=true`)
@@ -299,7 +338,7 @@ Windows and Linux, not macOS.
 
 ### Useful preferences (`--pref`)
 
-- remote.prefs.recommended=false. When Firefox runs in automation, it applies [RecommendedPreferences](https://searchfox.org/firefox-main/source/remote/shared/RecommendedPreferences.sys.mjs) that modify browser behavior for testing. Set remote.prefs.recommended to false to skip those and have a configuration closer to a regular Firefox instance.
+- remote.prefs.recommended=false. When Firefox runs in automation, it applies [RecommendedPreferences](https://searchfox.org/firefox-main/source/remote/shared/RecommendedPreferences.sys.mjs) that modify browser behavior for testing. Set remote.prefs.recommended to false to skip those and have a configuration closer to a regular Firefox instance. **Set this whenever the profile also holds your own data**: the recommended prefs are meant for throwaway test profiles, and on a profile you browse with they change real settings (updates, session restore, cache/bfcache, telemetry). In `--connect-existing` mode `--pref` cannot reach the browser, so set the pref in `about:config` first — see [Connect to an existing Firefox](#connect-to-an-existing-firefox-the-agent-drives-your-own-browser).
 - remote.log.level=Trace. Enable verbose WebDriver protocol logs in Firefox. The MCP server will automatically pass the matching log level to geckodriver so both sides log at the same verbosity.
 - app.update.disabledForTesting=false. Allow Firefox to automatically download and apply updates. Note that updates may interrupt your session. Requires also setting remote.prefs.recommended=false.
 
@@ -332,23 +371,69 @@ node dist/index.js --android-device <serial> --android-package org.mozilla.fenix
 
 Port forwarding between the host and device is handled automatically by geckodriver.
 
-### Connect to existing Firefox
+### Connect to an existing Firefox (the agent drives your own browser)
 
-Use `--connect-existing` to automate your real browsing session, with cookies, logins, and open tabs intact:
+By default the server launches a Firefox of its own. `--connect-existing` attaches to the
+browser you already run instead, so the agent works in your session: your tabs, your logins,
+your cookies, no second profile to sign in to again. This is the way to let an agent operate the
+browser you actually use.
+
+#### 1. Prepare the profile: `remote.prefs.recommended=false`
+
+When a WebDriver session starts, Firefox applies its test-oriented
+[RecommendedPreferences](https://searchfox.org/firefox-main/source/remote/shared/RecommendedPreferences.sys.mjs)
+unless `remote.prefs.recommended` is `false`. Those prefs are written to the profile in use and
+change update checking, session restore, cache and bfcache, telemetry and more, because they
+assume a disposable test profile. Turn them off before you let the agent in, or it will treat
+your own profile as an automation profile and rearrange settings you rely on:
+
+- `about:config` → `remote.prefs.recommended` → `false` (kept in that profile), or
+- add `user_pref("remote.prefs.recommended", false);` to the profile's `user.js`.
+
+`--pref remote.prefs.recommended=false` does **not** help here: in this mode the server sends no
+`moz:firefoxOptions` prefs, because changing prefs on a live browser can disturb the Remote
+Agent. Set the pref in the browser as shown above. When the server launches Firefox itself,
+`--pref` is the right way to say it, and this section does not apply.
+
+#### 2. Start Firefox with remote control enabled
+
+Both flags are required, because the server uses WebDriver Classic (`--marionette`) and
+WebDriver BiDi (`--remote-debugging-port`). With only one of them the connection fails and the
+server tells you to restart with both:
 
 ```bash
-# Start Firefox with Marionette and the Remote Agent (BiDi)
+# Quit Firefox first: the flags only affect a process that starts with them.
 firefox --marionette --remote-debugging-port
+```
 
-# Run the MCP server
+If Firefox is already running, this command only opens a window in that instance: the flags are
+ignored, so neither Marionette nor the Remote Agent starts. Quit Firefox completely, then run it
+with the flags.
+
+#### 3. Point the server at it
+
+```bash
 node dist/index.js --connect-existing --marionette-port 2828
 ```
 
-Both flags are required because the MCP uses both WebDriver Classic (`--marionette`) and WebDriver BiDi (`--remote-debugging-port`). If Firefox is only started with `--marionette`, the MCP server fails to connect and asks you to restart Firefox with both flags.
+2828 is the default. Pass `--marionette-port` to match a different port, for example if you
+started Firefox with `--marionette --marionette-port 4242 --remote-debugging-port`.
 
-If Firefox is already running with the same profile, the command above only opens a new window in that instance: the flags are ignored, so neither Marionette nor the Remote Agent starts.
+Marionette accepts one client at a time, so:
 
-To keep your everyday Firefox running without Marionette, give the MCP server its own profile. Firefox runs one process per profile, so both instances run side by side, and the agent only reaches what you sign in to in that profile:
+- `close_firefox_session` ends the session and leaves your browser running — use it when the
+  task is done, then restart Firefox without the flags;
+- `--idle-timeout` (default 1800 seconds) does the same automatically after a quiet period, so
+  another client can take over;
+- the next tool call reconnects and selects whichever tab is active at that moment.
+
+`--start-url` is ignored in this mode, so connecting never navigates your browser away from what
+you were looking at.
+
+#### If you would rather not use your everyday profile
+
+Give the server its own profile instead: Firefox runs one process per profile, so both instances
+run side by side, and the agent only reaches what you sign in to in that profile:
 
 ```bash
 # Once: create a dedicated profile
@@ -362,7 +447,9 @@ firefox -P firefox-mcp --marionette --remote-debugging-port
 > `navigator.webdriver = true` and changes other browser fingerprint signals,
 > which can trigger bot detection on sites protected by Cloudflare, Akamai, etc.
 > Only enable Marionette when you need MCP automation, then restart Firefox
-> normally afterward, or run it in a dedicated profile as shown above.
+> normally afterward, or run it in a dedicated profile as shown above. The
+> [stealth module](#hiding-the-webdriver-flag-stealth-module) can make
+> `navigator.webdriver` read false while a session is active.
 
 ## Tool overview
 
