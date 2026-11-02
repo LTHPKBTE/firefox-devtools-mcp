@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `README.zh-CN.md`, a Chinese translation of the README. The English file and the release archive link to it; no code is translated
+
 ### Changed
 - The README documents how to uninstall: restore the patched browser library, remove the client entry, then delete `~/.firefox-devtools-mcp`. `stealth help` says the same about `restore` and `prune`
 - The README rewrites how to connect to your own Firefox: set `remote.prefs.recommended=false` before connecting, start the browser with both remote-control flags, and close the session with `close_firefox_session` so the browser keeps running

@@ -1,5 +1,7 @@
 # Firefox DevTools MCP
 
+English | [简体中文](README.zh-CN.md)
+
 > **This is not a Mozilla repository.** This fork lives at
 > [LTHPKBTE/firefox-devtools-mcp](https://github.com/LTHPKBTE/firefox-devtools-mcp) and builds
 > the all-tools variant, which includes the Mozilla-only modules for inspecting Firefox's
@@ -316,7 +318,10 @@ node dist.moz/stealth-cli.js restore --firefox-path "C:\Program Files\Waterfox\w
 node dist.moz/stealth-cli.js prune --dry-run   # then drop --dry-run
 ```
 
-`--firefox-path` defaults to a detected install on Windows. `status`, `patch` and `restore`
+`--firefox-path` defaults to a detected **Firefox** install on Windows: `Program Files`, the
+`firefox.exe` App Paths registry entries, or `PATH`. Other builds — Waterfox, LibreWolf, a
+portable copy — are only found when you pass the path, which is why the examples above do.
+`status`, `patch` and `restore`
 also exist as MCP tools of the same names (`get_stealth_status`, `patch_navigator_webdriver`,
 `restore_navigator_webdriver`) and are exposed when the `all` preset is selected.
 
