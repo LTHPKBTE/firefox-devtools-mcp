@@ -186,9 +186,34 @@ npx @mozilla/firefox-devtools-mcp --tools pages network console
 The `prefs` and `privileged` modules require `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1`. The `launch`
 module restarts Firefox under a caller-chosen binary, profile, environment and set of
 preferences, which is a configuration change the operator should own. The `bidi` module sends
-any WebDriver BiDi command, so it gives access to what the other modules expose. This fork
-builds all four modules in; the upstream public package skips them even if requested and logs
-a warning naming the modules it dropped.
+any WebDriver BiDi command, so it gives access to what the other modules expose. The `stealth`
+module edits the installed browser binary; see [Hiding the WebDriver
+flag](#hiding-the-webdriver-flag-stealth-module). This fork builds all five modules in; the
+upstream public package skips them even if requested and logs a warning naming the modules it
+dropped.
+
+### Hiding the WebDriver flag (`stealth` module)
+
+`navigator.webdriver` is answered by C++ — `Navigator::Webdriver()` asks the remote agent and
+Marionette whether automation is running — so no preference or page script can change it. The
+`stealth` module changes the answer where it is produced: it finds that function in the shared
+library the browser loads (`xul.dll` on Windows, `libxul.so` on Linux) and overwrites its entry
+with `xor eax, eax; ret`, which makes the property read false while an automation session is
+active. This was verified against the browser: with the patch `navigator.webdriver` is `false`
+and the session still works, and restoring the file brings `true` back.
+
+- `get_stealth_status` reports the module path, version, SHA-256, patch offset and backups.
+- `patch_navigator_webdriver` backs the original file up under
+  `~/.firefox-devtools-mcp/stealth/backups/<sha256>/`, then patches it in place.
+- `restore_navigator_webdriver` copies that backup back.
+
+The browser must be closed: the library is loaded and Windows refuses the write otherwise. The
+function is located by a byte signature rather than a fixed address, so the same patch applies
+across rebuilds; when a build does not match a known signature the tools report `unrecognized`
+and change nothing. A browser update replaces the patched file with the vendor one, so it also
+reports `unrecognized` until a signature for the new build is added, and the old backup is kept
+but never restored over the new install. Signatures currently cover the Windows x64 153 build;
+the patch is implemented for Windows and Linux, not macOS.
 
 ### Useful preferences (`--pref`)
 
