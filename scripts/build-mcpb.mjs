@@ -22,7 +22,14 @@ const stagingDir = mkdtempSync(resolve(tmpdir(), 'firefox-devtools-mcpb-'));
 
 try {
   cpSync(resolve(root, 'dist.moz'), resolve(stagingDir, 'dist'), { recursive: true });
-  for (const file of ['README.md', 'LICENSE-MIT', 'LICENSE-APACHE', 'package.json', 'package-lock.json']) {
+  for (const file of [
+    'README.md',
+    'README.zh-CN.md',
+    'LICENSE-MIT',
+    'LICENSE-APACHE',
+    'package.json',
+    'package-lock.json',
+  ]) {
     cpSync(resolve(root, file), resolve(stagingDir, file));
   }
 
