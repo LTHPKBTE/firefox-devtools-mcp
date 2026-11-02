@@ -21,7 +21,7 @@ Repository: https://github.com/LTHPKBTE/firefox-devtools-mcp
 
 Upstream: https://github.com/mozilla/firefox-devtools-mcp
 
-> **Note**: This MCP server requires a local Firefox browser installation and cannot run on cloud hosting services like glama.ai. `npx @mozilla/firefox-devtools-mcp@latest` installs the upstream public build, which has no Mozilla-only modules; to get the all-tools build, build from source as described in [Build from source](#build-from-source).
+> **Note**: This MCP server requires a local Firefox browser installation and cannot run on cloud hosting services like glama.ai. `npx @mozilla/firefox-devtools-mcp@latest` installs the upstream public build, which has no Mozilla-only modules; see [Install a prebuilt build](#install-a-prebuilt-build-this-fork) for the all-tools build of this fork, or [Build from source](#build-from-source).
 
 ## Security
 
@@ -38,9 +38,45 @@ See [SECURITY.md](SECURITY.md) for a full breakdown of risks and how to report v
 - Node.js ≥ 20.19.0
 - Firefox 100+ installed (auto‑detected, or pass `--firefox-path`)
 
+## Install a prebuilt build (this fork)
+
+This fork is not published to npm or the MCP registry — those names belong to upstream — so
+everything is built by GitHub Actions and downloaded from GitHub:
+
+- **Release** (recommended) — [Releases](https://github.com/LTHPKBTE/firefox-devtools-mcp/releases),
+  created when a `vX.Y.Z` tag is pushed:
+  - `firefox-devtools-mcp-vX.Y.Z.tar.gz` — the all-tools build, for any MCP client
+  - `firefox-devtools-mcp-X.Y.Z.mcpb` — Claude Desktop extension, installed with one click
+- **Latest `main` build** — Actions → [CI](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml)
+  → newest run → *Artifacts* → `dist.moz/`. Needs a GitHub account and is deleted after 7 days.
+
+From the tarball:
+
+```bash
+mkdir firefox-devtools-mcp
+tar -xzf firefox-devtools-mcp-v0.10.7.tar.gz -C firefox-devtools-mcp
+cd firefox-devtools-mcp
+npm install --omit=dev
+node dist/index.js --auto-profile             # the MCP server (stdio)
+node dist/stealth-cli.js status               # optional: the binary patch command
+```
+
+Then point your client at that absolute path, for example with Claude Code:
+
+```bash
+claude mcp add firefox-devtools node /absolute/path/to/firefox-devtools-mcp/dist/index.js -- --auto-profile
+```
+
+The `.tar.gz` holds `dist/` plus `package.json`, so `npm install --omit=dev` is the only extra
+step; `dist/stealth-cli.js` and the `dist/snapshot.injected.global.js` browser script travel
+with it. Presets work as described below, and `--tool-preset all` is the one that also exposes
+the `stealth` tools.
+
 ## Install and use with Claude Code or Codex (npx)
 
-Recommended: use `npx` so you run the latest published version from npm.
+These commands install the **upstream** package from npm, which is the public build without the
+Mozilla-only modules. Use them only if that is what you want; for the all-tools build, install a
+release as described above.
 
 ### Option A — CLI
 

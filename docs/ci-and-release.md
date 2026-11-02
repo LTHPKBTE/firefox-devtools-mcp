@@ -19,27 +19,40 @@ Workflows
 - PR Check (.github/workflows/pr-check.yml)
   - Fast checks on PR open/update: lint, format check, typecheck.
 
-- Version Check (.github/workflows/version-check.yml)
-  - On tag push `v*`: compares the tag version with `package.json`.
-  - Fails if they differ (bump package.json before tagging).
-
 - Release (.github/workflows/release.yml)
-  - On tag push `v*`: runs tests, builds `dist.moz/`, renames it to `dist/`, and creates a GitHub
-    Release with a tarball of `dist` + metadata and the MCPB bundle.
+  - On tag push `v*` **only**. Pushes to branches never create a Release.
+  - Fails unless the tag equals `v` + the `package.json` version.
+  - Runs tests, builds `dist.moz/`, renames it to `dist/`, and creates a GitHub Release with
+    a tarball of `dist` + metadata and the MCPB bundle.
+
+What each workflow produces
+
+| Trigger | Output | Where | Lifetime |
+| --- | --- | --- | --- |
+| push to `main`/`develop` | `dist.moz/` (all-tools build) | Actions run → Artifacts | 7 days |
+| tag `v*` | `firefox-devtools-mcp-vX.Y.Z.tar.gz`, `firefox-devtools-mcp-X.Y.Z.mcpb` | GitHub Releases | until deleted |
+
+Nothing is uploaded to npm or the MCP registry: the upstream package owns those names, so
+`npx @mozilla/firefox-devtools-mcp` installs the upstream public build, not this one.
 
 Secrets
 - `CODECOV_TOKEN` (optional): used by Codecov upload step (CI). The step is skipped if the token or coverage file is missing.
 - No publishing secret is needed: this fork does not publish packages.
 
+Version control
+- `package.json` is the single source of truth; the release tag must be `v` + that version.
+- `npm version patch|minor|major -m "release: %s"` bumps it, runs `sync:manifests` (the `version`
+  lifecycle script) and creates the tag in one step, carrying the new version into
+  `plugin.json`, `gemini-extension.json`, `manifest.mcpb.json`, `server.json` and
+  `package-lock.json`. Editing `package.json` by hand works too, then run
+  `npm run sync:manifests`.
+
 Release flow
-1) Bump version in `package.json` (keep 0.x until API is stable):
-   - `npm version patch` (or minor), or edit `package.json` by hand
-   - Run `npm run sync:manifests` to carry the version into the manifests that duplicate it
-   - Update `CHANGELOG.md` and commit the change
-2) Create and push the tag (must match package.json):
-   - `git tag v0.2.0 && git push origin v0.2.0`
-3) The `version-check` job validates the tag vs. package.json.
-4) `release` creates a GitHub Release with the tarball and the MCPB bundle.
+1) Bump the version (keep 0.x until the API is stable) and update `CHANGELOG.md`.
+2) Push the commit, then the tag: `git push origin main && git push origin v0.10.7`.
+3) The release workflow verifies the tag against `package.json`, builds and publishes the
+   GitHub Release. A failed check means the tag and the file disagree; delete the tag
+   (`git push --delete origin vX.Y.Z`) and retry after fixing.
 
 Client plugin manifests
 - `plugins/*/.claude-plugin/` (Claude), `gemini-extension.json` (Gemini CLI) and the root
@@ -53,4 +66,6 @@ Client plugin manifests
 
 Notes
 - Use `@latest` in README examples to encourage npx usage against the upstream package.
+- Consumers of this fork install the release artifacts instead; see "Prebuilt downloads" in the
+  README.
 
