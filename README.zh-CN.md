@@ -1,6 +1,6 @@
 # Firefox DevTools MCP
 
-English | [简体中文](README.zh-CN.md)
+[English](README.md) | 简体中文
 
 [![CI](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT%20%2F%20Apache--2.0-blue.svg)](#许可)
@@ -30,7 +30,7 @@ English | [简体中文](README.zh-CN.md)
 
 ### 1. 获取并部署
 
-**方式 A：下载预编译包（推荐）**
+**方式 A：下载预编译包**
 从 [Releases](https://github.com/LTHPKBTE/firefox-devtools-mcp/releases) 下载最新的 `firefox-devtools-mcp-vX.Y.Z.tar.gz`：
 ```bash
 mkdir firefox-devtools-mcp && cd firefox-devtools-mcp
@@ -51,7 +51,7 @@ npm run build:moz
 ```
 
 **方式 D：CI 产物（尚未发布 Release 时）**
-每次推送到 `main` 都会上传该提交的构建结果：打开最近一次
+打开最近一次
 [CI 运行](https://github.com/LTHPKBTE/firefox-devtools-mcp/actions/workflows/ci.yml)，下载
 `firefox-devtools-mcp-package` 制品并解压。目录结构与上面的压缩包一致
 （`dist/`、`package.json`、英文与中文 README、两份许可证），因此命令也相同：
@@ -64,11 +64,6 @@ npm install --omit=dev
 
 服务端基于 `stdio` 通信。将 `/path/to/dist/index.js` 替换为本地实际绝对路径。
 
-#### Claude Code (CLI)
-```bash
-claude mcp add firefox-devtools node /path/to/dist/index.js -- --auto-profile
-```
-
 #### JSON 配置文件 (Claude Desktop, Cursor, Cline)
 ```json
 {
@@ -77,8 +72,9 @@ claude mcp add firefox-devtools node /path/to/dist/index.js -- --auto-profile
       "command": "node",
       "args": [
         "/path/to/dist/index.js",
-        "--auto-profile",
-        "--viewport", "1280x720"
+        "--connect-existing",
+        "--tool-preset", "mozilla",
+        "--unrestricted-save-paths"
       ]
     }
   }
@@ -86,6 +82,11 @@ claude mcp add firefox-devtools node /path/to/dist/index.js -- --auto-profile
 ```
 
 *Windows 用户注意*：路径请使用正斜杠（`C:/tools/dist/index.js`）或双反斜杠（`C:\\tools\\dist\\index.js`）。
+
+#### Claude Code (CLI)
+```bash
+claude mcp add firefox-devtools node /path/to/dist/index.js -- --auto-profile
+```
 
 #### 调试验证 (MCP Inspector)
 ```bash
@@ -100,14 +101,19 @@ npx @modelcontextprotocol/inspector node /path/to/dist/index.js --headless --sta
 
 让 AI 智能体直接操作你日常浏览中的标签页、登录态与 Cookie，而无需启动空白浏览器。
 
-1. **关闭测试配置覆盖**：在目标 Firefox 配置文件的 `about:config` 中，将 `remote.prefs.recommended` 设为 `false`（或写入配置文件的 `user.js` 中），防止浏览器被重置测试偏好。
+1. **关闭测试偏好覆盖**：在目标 Firefox 配置文件的 `about:config` 中，将 `remote.prefs.recommended` 设为 `false`（或写入配置文件的 `user.js` 中），防止浏览器被重置更新与缓存策略。
 2. **带调试参数启动 Firefox**：
-   ```bash
-   firefox --marionette --remote-debugging-port
-   ```
+   - **常规模式**：
+     ```bash
+     firefox --marionette --remote-debugging-port -p focusmanager.testmode=false
+     ```
+   - **特权层模式**（允许 AI 访问系统级特权上下文与内部配置，使用 `--tool-preset mozilla` 中的特权工具时）：
+     ```bash
+     firefox --marionette --remote-debugging-port -p focusmanager.testmode=false --remote-allow-system-access
+     ```
 3. **启动 MCP 服务端挂载**：
    ```bash
-   node dist/index.js --connect-existing --marionette-port 2828
+   node /path/to/dist/index.js --connect-existing --tool-preset mozilla --unrestricted-save-paths
    ```
 
 > **注意**：开启 `--marionette` 会使 `navigator.webdriver = true`，容易触发 Cloudflare/Akamai 风控。日常使用请重启浏览器去掉参数，或使用下方 Stealth 补丁。
@@ -149,7 +155,7 @@ node dist/index.js --android-device <serial> --android-package org.mozilla.fenix
 
 ### 将大体积输出直接落盘 (`saveTo`)
 
-防止 DOM 快照或截图撑爆大语言模型的上下文窗口：
+防止 DOM 快照或网络日志撑爆大语言模型的上下文窗口：
 
 ```javascript
 // 支持该参数的工具示例：
@@ -182,7 +188,7 @@ evaluate_script({ function: "() => performance.getEntries()", saveTo: true, prev
 - `slim`：基础页面交互工具集（`pages`）。
 - `basic`（默认）：常规浏览 + `evaluate_script` 脚本执行。
 - `developer`：增加 `network`、`console`、`debugging`、`profiler`。
-- `mozilla`：增加特权访问 `privileged` 和首选项 `prefs`（需配合 `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1`）。
+- `mozilla`：增加特权访问 `privileged` 和首选项 `prefs`（需 Firefox 带着 `--remote-allow-system-access` 启动）。
 - `all`：包含全部工具模块（含运行时修改 stealth 补丁的工具）。
 
 完整 API 及工具参数清单：[docs/tools.md](docs/tools.md)。
@@ -198,6 +204,22 @@ evaluate_script({ function: "() => performance.getEntries()", saveTo: true, prev
   "command": "cmd",
   "args": ["/c", "node", "C:\\tools\\dist\\index.js"]
   ```
+
+---
+
+## 卸载
+
+1. **还原浏览器补丁**（若打过 Stealth 补丁）：
+   ```bash
+   node dist/stealth-cli.js restore --firefox-path "C:\Program Files\Waterfox"
+   node dist/stealth-cli.js prune
+   ```
+2. **移除客户端配置**：从 MCP 客户端的 JSON / TOML 配置文件中删除 `firefox-devtools` 相关条目（或执行 `claude mcp remove firefox-devtools`）。
+3. **清理本地文件**：删除本项目的解包/克隆目录，以及持久化配置目录：
+   - Windows: `%USERPROFILE%\.firefox-devtools-mcp`
+   - Linux/macOS: `~/.firefox-devtools-mcp`
+
+---
 
 ## 许可
 
