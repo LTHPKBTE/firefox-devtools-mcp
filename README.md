@@ -105,7 +105,7 @@ Attach the AI agent to your active browsing session (cookies, logins, tabs) inst
 2. **Start Firefox with remote debugging flags**:
    - **Standard mode**:
      ```bash
-     firefox --marionette --remote-debugging-port
+     firefox --marionette --remote-debugging-port -p focusmanager.testmode=false
      ```
    - **Privileged mode** (allows AI to access browser chrome / internal prefs; required for `--tool-preset mozilla`):
      ```bash
