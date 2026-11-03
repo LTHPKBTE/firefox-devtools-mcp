@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.8] - 2026-11-03
+
 ### Added
 - `README.zh-CN.md`, a Chinese translation of the README. The English file and the release archive link to it; no code is translated
 - `scripts/prepare-artifact.mjs` assembles `dist-package/` — the all-tools build as `dist/` plus `package.json`, both READMEs and the licenses — so the CI artifact has the same layout as the Release archive and can be installed with `npm install --omit=dev`
@@ -24,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Both READMEs restructure around the task instead of the flag list: `What this fork adds` states the differences from upstream, the two install routes (a build of this repository, or a local build) sit side by side under `## Install`, and task guides (`--connect-existing`, `stealth`, Android, `saveTo`) are separated from the `## CLI reference` they used to be nested under
 - The install instructions are stated once each: the duplicated `npm install && npm run build:moz` block under `Build from source` is gone, and the remaining build commands live in `## Install` and `## Development`
 - `## Security` moves after the guides and the CLI reference, and is now three bullets; the `navigator.webdriver` mechanism, byte signature, backup layout and measurements move to `docs/stealth.md`, leaving usage in the README
+- Both READMEs now open with a security notice: the recommended configuration (`--connect-existing`, `--tool-preset mozilla`, `--unrestricted-save-paths`, the `stealth` patch) goes beyond the upstream Mozilla security design, and the notice points at `SECURITY.md`
+- Upstream `0eaaa9f` (`Bug 2088011`, #229) merged: tool argument types are derived from their definitions through `json-schema-to-ts`, and every tool definition carries `as const`
 
 ### Fixed
 - `stealth` accepts its options before or after the command, and a missing command prints the usage instead of `Unknown argument` naming the path
