@@ -97,18 +97,20 @@ export const getStealthStatusTool = {
       },
     },
   },
-} satisfies ToolDefinition;
+} as const satisfies ToolDefinition;
 
-export const handleGetStealthStatus = defineToolHandler(async (input: unknown) => {
-  const { firefoxPath } = (input ?? {}) as { firefoxPath?: string };
-  const binaryPath = await resolveBinaryPath(firefoxPath);
-  const modulePath = resolveModulePath(binaryPath);
-  if (!existsSync(modulePath)) {
-    return successResponse(`No browser library at ${modulePath} (binary: ${binaryPath})`);
+export const handleGetStealthStatus = defineToolHandler<typeof getStealthStatusTool>(
+  async (input: unknown) => {
+    const { firefoxPath } = (input ?? {}) as { firefoxPath?: string };
+    const binaryPath = await resolveBinaryPath(firefoxPath);
+    const modulePath = resolveModulePath(binaryPath);
+    if (!existsSync(modulePath)) {
+      return successResponse(`No browser library at ${modulePath} (binary: ${binaryPath})`);
+    }
+    const status = getModuleStatus(modulePath);
+    return successResponse([...describeStatus(status), '', fingerprintNote].join('\n'));
   }
-  const status = getModuleStatus(modulePath);
-  return successResponse([...describeStatus(status), '', fingerprintNote].join('\n'));
-});
+);
 
 // ============================================================================
 // Tool: patch_navigator_webdriver
@@ -133,24 +135,26 @@ export const patchNavigatorWebdriverTool = {
       },
     },
   },
-} satisfies ToolDefinition;
+} as const satisfies ToolDefinition;
 
-export const handlePatchNavigatorWebdriver = defineToolHandler(async (input: unknown) => {
-  const { firefoxPath } = (input ?? {}) as { firefoxPath?: string };
-  const binaryPath = await resolveBinaryPath(firefoxPath);
-  const modulePath = resolveModulePath(binaryPath);
-  if (!existsSync(modulePath)) {
-    throw new Error(`No browser library at ${modulePath} (binary: ${binaryPath})`);
+export const handlePatchNavigatorWebdriver = defineToolHandler<typeof patchNavigatorWebdriverTool>(
+  async (input: unknown) => {
+    const { firefoxPath } = (input ?? {}) as { firefoxPath?: string };
+    const binaryPath = await resolveBinaryPath(firefoxPath);
+    const modulePath = resolveModulePath(binaryPath);
+    if (!existsSync(modulePath)) {
+      throw new Error(`No browser library at ${modulePath} (binary: ${binaryPath})`);
+    }
+
+    const outcome = patchWebdriverFlag(modulePath);
+    const headline = outcome.changed
+      ? `Patched ${modulePath}`
+      : `${modulePath} was already patched; nothing was written`;
+    return successResponse(
+      [headline, '', ...describeStatus(outcome.status), '', fingerprintNote].join('\n')
+    );
   }
-
-  const outcome = patchWebdriverFlag(modulePath);
-  const headline = outcome.changed
-    ? `Patched ${modulePath}`
-    : `${modulePath} was already patched; nothing was written`;
-  return successResponse(
-    [headline, '', ...describeStatus(outcome.status), '', fingerprintNote].join('\n')
-  );
-});
+);
 
 // ============================================================================
 // Tool: restore_navigator_webdriver
@@ -175,9 +179,11 @@ export const restoreNavigatorWebdriverTool = {
       },
     },
   },
-} satisfies ToolDefinition;
+} as const satisfies ToolDefinition;
 
-export const handleRestoreNavigatorWebdriver = defineToolHandler(async (input: unknown) => {
+export const handleRestoreNavigatorWebdriver = defineToolHandler<
+  typeof restoreNavigatorWebdriverTool
+>(async (input: unknown) => {
   const { firefoxPath } = (input ?? {}) as { firefoxPath?: string };
   const binaryPath = await resolveBinaryPath(firefoxPath);
   const modulePath = resolveModulePath(binaryPath);

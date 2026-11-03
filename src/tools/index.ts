@@ -32,11 +32,10 @@ import { module as prefs } from './firefox-prefs.js';
 import { module as privileged } from './privileged-context.js';
 import { module as bidi } from './bidi.js';
 import { module as stealth } from './stealth.js';
-import type { ToolModule } from './module.js';
 
 export type { ToolDefinition, ToolEntry, ToolModule } from './module.js';
 
-export const MODULES: ToolModule[] = [
+export const MODULES = [
   pages,
   snapshot,
   input,
@@ -57,9 +56,9 @@ export const MODULES: ToolModule[] = [
   privileged,
   bidi,
   stealth,
-];
+] as const;
 
-export const MODULE_NAMES = MODULES.map((m) => m.name);
+export const MODULE_NAMES: string[] = MODULES.map((m) => m.name);
 
 // SLIM: Minimum set of tools to navigate and browser the web efficiently.
 const SLIM = ['pages', 'snapshot', 'input', 'screenshot'];
