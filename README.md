@@ -7,7 +7,7 @@ English | [简体中文](README.zh-CN.md)
 
 An MCP (Model Context Protocol) server that allows AI agents (Claude, Cursor, Codex) to inspect and automate Firefox via WebDriver BiDi.
 
-> **Note**: This is an independent fork of [mozilla/firefox-devtools-mcp](https://github.com/mozilla/firefox-devtools-mcp) with unlocked internal modules and prebuilt distributions. Not affiliated with Mozilla.
+> **Note**: Independent fork of [mozilla/firefox-devtools-mcp](https://github.com/mozilla/firefox-devtools-mcp) with unlocked internal modules and prebuilt distributions. Not affiliated with Mozilla.
 
 ---
 
@@ -30,7 +30,7 @@ Compared to upstream `@mozilla/firefox-devtools-mcp`:
 
 ### 1. Download or Build
 
-**Option A: Prebuilt Tarball (Recommended)**
+**Option A: Prebuilt Tarball**
 Download the latest `firefox-devtools-mcp-vX.Y.Z.tar.gz` from [Releases](https://github.com/LTHPKBTE/firefox-devtools-mcp/releases):
 ```bash
 mkdir firefox-devtools-mcp && cd firefox-devtools-mcp
@@ -47,7 +47,7 @@ git clone https://github.com/LTHPKBTE/firefox-devtools-mcp
 cd firefox-devtools-mcp
 npm install
 npm run build:moz
-# Binary is located at dist.moz/index.js
+# Output entry point: dist.moz/index.js
 ```
 
 **Option D: CI Artifact (no release yet)**
@@ -62,12 +62,7 @@ npm install --omit=dev
 
 ### 2. Client Configuration
 
-The server communicates over `stdio`. Replace `/path/to/dist/index.js` with the absolute path on your system.
-
-#### Claude Code (CLI)
-```bash
-claude mcp add firefox-devtools node /path/to/dist/index.js -- --auto-profile
-```
+The server communicates over `stdio`. Replace `/path/to/dist/index.js` with your absolute local path.
 
 #### JSON Configuration (Claude Desktop, Cursor, Cline)
 ```json
@@ -77,8 +72,9 @@ claude mcp add firefox-devtools node /path/to/dist/index.js -- --auto-profile
       "command": "node",
       "args": [
         "/path/to/dist/index.js",
-        "--auto-profile",
-        "--viewport", "1280x720"
+        "--connect-existing",
+        "--tool-preset", "mozilla",
+        "--unrestricted-save-paths"
       ]
     }
   }
@@ -86,6 +82,11 @@ claude mcp add firefox-devtools node /path/to/dist/index.js -- --auto-profile
 ```
 
 *Note for Windows*: Use forward slashes (`C:/tools/dist/index.js`) or escaped backslashes in paths.
+
+#### Claude Code (CLI)
+```bash
+claude mcp add firefox-devtools node /path/to/dist/index.js -- --auto-profile
+```
 
 #### Test with MCP Inspector
 ```bash
@@ -98,16 +99,21 @@ npx @modelcontextprotocol/inspector node /path/to/dist/index.js --headless --sta
 
 ### Connect to an Existing Firefox Instance
 
-Attach the AI agent to your current browsing session (cookies, logins, tabs) instead of launching an isolated browser.
+Attach the AI agent to your active browsing session (cookies, logins, tabs) instead of launching an isolated browser.
 
-1. **Disable test preferences**: In your target Firefox profile, set `remote.prefs.recommended = false` in `about:config` or in `user.js`. (Prevents Firefox from clearing sessions/cache).
+1. **Disable test preferences**: In your target Firefox profile, set `remote.prefs.recommended = false` in `about:config` or in `user.js` (prevents Firefox from overwriting update/cache settings).
 2. **Start Firefox with remote debugging flags**:
-   ```bash
-   firefox --marionette --remote-debugging-port
-   ```
+   - **Standard mode**:
+     ```bash
+     firefox --marionette --remote-debugging-port
+     ```
+   - **Privileged mode** (allows AI to access browser chrome / internal prefs; required for `--tool-preset mozilla`):
+     ```bash
+     firefox --marionette --remote-debugging-port -p focusmanager.testmode=false --remote-allow-system-access
+     ```
 3. **Launch the MCP server**:
    ```bash
-   node dist/index.js --connect-existing --marionette-port 2828
+   node /path/to/dist/index.js --connect-existing --tool-preset mozilla --unrestricted-save-paths
    ```
 
 > **Warning**: Running with `--marionette` sets `navigator.webdriver = true`, tripping Cloudflare/Akamai bot detection. Restart Firefox without flags when finished, or use the `stealth` patch below.
@@ -131,7 +137,7 @@ node dist/stealth-cli.js restore --firefox-path "C:\Program Files\Waterfox"
 # Clean up outdated update backups
 node dist/stealth-cli.js prune
 ```
-Detailed signature offsets and mechanism: [docs/stealth.md](docs/stealth.md).
+Detailed mechanism and signature offsets: [docs/stealth.md](docs/stealth.md).
 
 ### Firefox for Android
 
@@ -149,7 +155,7 @@ node dist/index.js --android-device <serial> --android-package org.mozilla.fenix
 
 ### Redirect Large Outputs to Disk (`saveTo`)
 
-Prevents large outputs (snapshots, DOM trees, screenshots) from polluting the LLM context window:
+Prevents large outputs (snapshots, DOM trees, network dumps) from exhausting the LLM context window:
 
 ```javascript
 // Supported tools accept saveTo:
@@ -182,7 +188,7 @@ evaluate_script({ function: "() => performance.getEntries()", saveTo: true, prev
 - `slim`: Minimal page interaction (`pages`).
 - `basic` *(default)*: Standard browsing + `evaluate_script`.
 - `developer`: Adds `network`, `console`, `debugging`, `profiler`.
-- `mozilla`: Adds `privileged` and `prefs` (Requires `MOZ_REMOTE_ALLOW_SYSTEM_ACCESS=1`).
+- `mozilla`: Adds `privileged` and `prefs` (Requires Firefox started with `--remote-allow-system-access`).
 - `all`: Includes all modules + in-session stealth patching tools.
 
 Full API & tool documentation: [docs/tools.md](docs/tools.md).
@@ -198,6 +204,22 @@ Full API & tool documentation: [docs/tools.md](docs/tools.md).
   "command": "cmd",
   "args": ["/c", "node", "C:\\tools\\dist\\index.js"]
   ```
+
+---
+
+## Uninstall
+
+1. **Restore browser binary** (if stealth patch was applied):
+   ```bash
+   node dist/stealth-cli.js restore --firefox-path "/path/to/firefox"
+   node dist/stealth-cli.js prune
+   ```
+2. **Remove client config**: Remove the `firefox-devtools` block from your MCP client's config file (or run `claude mcp remove firefox-devtools`).
+3. **Delete files**: Delete the cloned/extracted repository directory and the persistent configuration directory:
+   - Windows: `%USERPROFILE%\.firefox-devtools-mcp`
+   - Linux/macOS: `~/.firefox-devtools-mcp`
+
+---
 
 ## License
 
