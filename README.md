@@ -9,6 +9,8 @@ An MCP (Model Context Protocol) server that allows AI agents (Claude, Cursor, Co
 
 > **Note**: Independent fork of [mozilla/firefox-devtools-mcp](https://github.com/mozilla/firefox-devtools-mcp) with unlocked internal modules and prebuilt distributions. Not affiliated with Mozilla.
 
+> **Security notice**: The recommended setup below (`--connect-existing`, `--tool-preset mozilla`, `--unrestricted-save-paths`, and the `stealth` patch) deliberately goes beyond the security design of upstream Mozilla builds: it exposes privileged browser APIs, your live profile data, unrestricted file writes, and hides the WebDriver flag. Read [SECURITY.md](SECURITY.md) before using it, and run it only against a profile and environment you are willing to expose.
+
 ---
 
 ## Fork Features

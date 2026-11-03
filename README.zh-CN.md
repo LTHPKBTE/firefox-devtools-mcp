@@ -9,6 +9,8 @@
 
 > **说明**：本项目是 [mozilla/firefox-devtools-mcp](https://github.com/mozilla/firefox-devtools-mcp) 的独立增强 Fork 版本，解锁了全部内置模块并提供开箱即用构建产物。非 Mozilla 官方仓库。
 
+> **安全提示**：下文推荐的配置（`--connect-existing`、`--tool-preset mozilla`、`--unrestricted-save-paths` 与 `stealth` 补丁）有意超出 Mozilla 上游构建的安全设计：它会开放特权浏览器接口、你正在使用的配置文件数据、任意路径写入，并隐藏 WebDriver 标志。使用前请阅读 [SECURITY.md](SECURITY.md)，并只在愿意承担暴露风险的配置文件与环境中运行。
+
 ---
 
 ## Fork 特性差异
